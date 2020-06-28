@@ -89,7 +89,8 @@ def Model(initial_cases, initial_date, N, beds_per_100k, R_0_start, k, x0, R_0_e
     return dates, S, E, I, C, R, D, R_0_over_time, total_CFR, daily_CFR, [Beds(i) for i in range(len(t))]
 
 
-############################################ the dash app layout ################################################
+############################################ t
+# he dash app layout ################################################
 external_stylesheets = [dbc.themes.BOOTSTRAP]
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
@@ -332,7 +333,7 @@ def update_graph(_, initial_cases, initial_date, population, icu_beds, p_I_to_C,
 
     return {  # return graph for compartments, graph for fatality rates, graph for reproduction rate, and graph for deaths over time
         'data': [
-            {'x': dates, 'y': S.astype(int), 'type': 'line', 'name': 'susceptible'},
+            {'x': dates, 'y': Sdcc.Graph, 'type': 'line', 'name': 'susceptible'},
             {'x': dates, 'y': E.astype(int), 'type': 'line', 'name': 'exposed'},
             {'x': dates, 'y': I.astype(int), 'type': 'line', 'name': 'infected'},
             {'x': dates, 'y': C.astype(int), 'type': 'line', 'name': 'critical'},
