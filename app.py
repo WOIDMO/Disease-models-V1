@@ -45,7 +45,7 @@ def Model(initial_cases, initial_date, N, p_immune, beta, gamma, delta, p_I_to_C
 N = 100000  # size of initial population
 initial_cases = 10  # initial number of Exposed. I chose 10 to stay away from the critical community size at the onset of the epidemic.
 
-num_reps = 50  # for Monte Carlo
+num_reps = 20  # for Monte Carlo
 
 disease = 'Covid_19'  # supported options: 'Covid_19', 'Influenza_seasonal', or 'deterministic_test'
 print(disease)
@@ -142,8 +142,8 @@ for i in range(num_reps):
 
 ########## print some results to the Terminal ###################
 # Set it to None to display all columns in the dataframe,
-# but actually print to terminal only if <30 rows (30 being arbitrary, used for testing)
-if num_reps < 30:
+# but actually print to terminal only if <15 rows (15 being arbitrary, used for testing)
+if num_reps < 15:
     pd.set_option('display.max_columns', None)
     print(df_results)
 else:
@@ -166,7 +166,8 @@ app = dash.Dash()
 #  plot using ploty express, with the intention to transfer it to DCC as explained in https://dash.plotly.com/dash-core-components/graph
 #  could not make it run with the regular dcc.Graph( ...  id='example-graph', ... figure={ ...  'data': [
 #  in that case it worked for a single line but I couldn't figure out how to pull all lines from the DataFrame. It kept failing to load the web page.
-# subplots: by https://panel.holoviz.org/reference/panes/Plotly.html
+
+# First handful or so runs of Monte Carlo graphs: Compartment content vs. time
 fig1 = px.line(df_I_vs_t[1:20].T,
                title="Number of Infected vs. time, per Monte Carlo run (1st 20)",
                width=600, height=400,
@@ -196,7 +197,7 @@ fig3 = px.line(df_D_vs_t[1:20].T,
                },
                )
 fig3.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
-
+# Histograms
 fig4 = px.histogram(df_results, x="total IFR",
                     title="Histogram of IFR (Infected / Dead) over all Monte Carlo runs",
                     width=600, height=400,
@@ -209,8 +210,11 @@ fig6 = px.histogram(df_results, x="max D",
                     title="Histogram of final Dead number over all Monte Carlo runs",
                     width=600, height=400,
                     )
-
-fig7 = px.line(df_I_vs_t.T.apply(np.median, axis=1),
+# Median graphs
+oneSigmaI = df_I_vs_t.T.apply(np.std, axis=1)
+medianI = df_I_vs_t.T.apply(np.median, axis=1)
+medianI_df = pd.DataFrame(data={'median': medianI, 'median+STD': medianI+oneSigmaI})
+fig7 = px.line(medianI_df,
                title="Median of Infected vs. time, over all Monte Carlo run",
                width=600, height=400,
                labels={  # replaces default labels by column name
@@ -218,8 +222,11 @@ fig7 = px.line(df_I_vs_t.T.apply(np.median, axis=1),
                    "index": "time [days]", "value": "Median of Infected"
                },
                )
-fig7.layout.update(showlegend=False)  # eliminate legends
-fig8 = px.line(df_C_vs_t.T.apply(np.median, axis=1),
+
+oneSigmaC = df_C_vs_t.T.apply(np.std, axis=1)
+medianC = df_C_vs_t.T.apply(np.median, axis=1)
+medianRangeC_df = pd.DataFrame(data={'median': medianC, 'median+STD': medianC+oneSigmaC})
+fig8 = px.line(medianRangeC_df,
                title="Median of Critical vs. time, over all Monte Carlo run",
                width=600, height=400,
                labels={  # replaces default labels by column name
@@ -227,9 +234,11 @@ fig8 = px.line(df_C_vs_t.T.apply(np.median, axis=1),
                    "index": "time [days]", "value": "Median of Critical"
                },
                )
-fig8.layout.update(showlegend=False)  # eliminate legends
 
-fig9 = px.line(df_D_vs_t.T.apply(np.median, axis=1),
+oneSigmaD = df_D_vs_t.T.apply(np.std, axis=1)
+medianD = df_D_vs_t.T.apply(np.median, axis=1)
+medianRangeD_df = pd.DataFrame(data={'median': medianD, 'median+STD': medianD+oneSigmaD})
+fig9 = px.line(medianRangeD_df,
                title="Median of Dead vs. time, over all Monte Carlo run",
                width=600, height=400,
                labels={  # replaces default labels by column name
@@ -237,9 +246,11 @@ fig9 = px.line(df_D_vs_t.T.apply(np.median, axis=1),
                    "index": "time [days]", "value": "Median of Dead"
                },
                )
-fig9.layout.update(showlegend=False)  # eliminate legends
 
-fig10 = px.line(df_IFR_vs_t.T.apply(np.median, axis=1),
+oneSigmaIFR = df_IFR_vs_t.T.apply(np.std, axis=1)
+medianIFR = df_IFR_vs_t.T.apply(np.median, axis=1)
+medianRangeIFR_df = pd.DataFrame(data={'median': medianIFR, 'median+STD': medianIFR+oneSigmaIFR, 'median-STD': medianIFR-oneSigmaIFR})
+fig10 = px.line(medianRangeIFR_df,
                title="Median of IFR vs. time, over all Monte Carlo run",
                width=600, height=400,
                labels={  # replaces default labels by column name
@@ -247,7 +258,7 @@ fig10 = px.line(df_IFR_vs_t.T.apply(np.median, axis=1),
                    "index": "time [days]", "value": "Median of IFR"
                },
                )
-fig10.layout.update(showlegend=False)  # eliminate legends
+
 
 
 
@@ -268,14 +279,17 @@ app.layout = html.Div(children=[
     dcc.Graph(
         id='fig1',
         figure=fig1,
+        className="six columns",
     ),
     dcc.Graph(
         id='fig2',
         figure=fig2,
+        className="six columns",
     ),
     dcc.Graph(
         id='fig3',
         figure=fig3,
+        className="six columns",
     ),
 
     dcc.Graph(
@@ -325,6 +339,8 @@ app.layout = html.Div(children=[
     #     }
     # )
 ])
+# app.css.append_css({
+#     'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'})
 
 if __name__ == '__main__':
     app.run_server(debug=True)
