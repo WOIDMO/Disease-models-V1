@@ -8,6 +8,7 @@ import plotly.express as px
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
+import dash_bootstrap_components as dbc
 
 
 ############################################ the model ################################################
@@ -45,7 +46,9 @@ def Model(initial_cases, initial_date, N, p_immune, beta, gamma, delta, p_I_to_C
 N = 100000  # size of initial population
 initial_cases = 10  # initial number of Exposed. I chose 10 to stay away from the critical community size at the onset of the epidemic.
 
-num_reps = 20  # for Monte Carlo
+num_reps = 200  # for Monte Carlo; num_reps = 1000 is a good number but takes a long time.
+# num_reps = 200 is good for the Median graphs,
+# and also gives a good sense on how the histogram will look like.
 
 disease = 'Covid_19'  # supported options: 'Covid_19', 'Influenza_seasonal', or 'deterministic_test'
 print(disease)
@@ -126,7 +129,7 @@ for i in range(num_reps):
                                             'peak C': max(C), 'max D': max(D), 'total IFR': max(total_CFR)})
     df_results = df_results.append(df_temp)
     # plot progress to terminal, to avoid the feeling it got stuck...
-    if round(i/25, 0) == (i/25):
+    if round(i / 25, 0) == (i / 25):
         print('in MC round ', i, 'out of ', num_reps)
 
     # thanks to
@@ -213,7 +216,7 @@ fig6 = px.histogram(df_results, x="max D",
 # Median graphs
 oneSigmaI = df_I_vs_t.T.apply(np.std, axis=1)
 medianI = df_I_vs_t.T.apply(np.median, axis=1)
-medianI_df = pd.DataFrame(data={'median': medianI, 'median+STD': medianI+oneSigmaI})
+medianI_df = pd.DataFrame(data={'median': medianI, 'median+STD': medianI + oneSigmaI})
 fig7 = px.line(medianI_df,
                title="Median of Infected vs. time, over all Monte Carlo run",
                width=600, height=400,
@@ -225,7 +228,7 @@ fig7 = px.line(medianI_df,
 
 oneSigmaC = df_C_vs_t.T.apply(np.std, axis=1)
 medianC = df_C_vs_t.T.apply(np.median, axis=1)
-medianRangeC_df = pd.DataFrame(data={'median': medianC, 'median+STD': medianC+oneSigmaC})
+medianRangeC_df = pd.DataFrame(data={'median': medianC, 'median+STD': medianC + oneSigmaC})
 fig8 = px.line(medianRangeC_df,
                title="Median of Critical vs. time, over all Monte Carlo run",
                width=600, height=400,
@@ -237,7 +240,7 @@ fig8 = px.line(medianRangeC_df,
 
 oneSigmaD = df_D_vs_t.T.apply(np.std, axis=1)
 medianD = df_D_vs_t.T.apply(np.median, axis=1)
-medianRangeD_df = pd.DataFrame(data={'median': medianD, 'median+STD': medianD+oneSigmaD})
+medianRangeD_df = pd.DataFrame(data={'median': medianD, 'median+STD': medianD + oneSigmaD})
 fig9 = px.line(medianRangeD_df,
                title="Median of Dead vs. time, over all Monte Carlo run",
                width=600, height=400,
@@ -249,18 +252,16 @@ fig9 = px.line(medianRangeD_df,
 
 oneSigmaIFR = df_IFR_vs_t.T.apply(np.std, axis=1)
 medianIFR = df_IFR_vs_t.T.apply(np.median, axis=1)
-medianRangeIFR_df = pd.DataFrame(data={'median': medianIFR, 'median+STD': medianIFR+oneSigmaIFR, 'median-STD': medianIFR-oneSigmaIFR})
+medianRangeIFR_df = pd.DataFrame(
+    data={'median': medianIFR, 'median+STD': medianIFR + oneSigmaIFR, 'median-STD': medianIFR - oneSigmaIFR})
 fig10 = px.line(medianRangeIFR_df,
-               title="Median of IFR vs. time, over all Monte Carlo run",
-               width=600, height=400,
-               labels={  # replaces default labels by column name
-                   # ... thanks to https://plotly.com/python/styling-plotly-express/
-                   "index": "time [days]", "value": "Median of IFR"
-               },
-               )
-
-
-
+                title="Median of IFR vs. time, over all Monte Carlo run",
+                width=600, height=400,
+                labels={  # replaces default labels by column name
+                    # ... thanks to https://plotly.com/python/styling-plotly-express/
+                    "index": "time [days]", "value": "Median of IFR"
+                },
+                )
 
 app.layout = html.Div(children=[
     html.H1(children='SEIR Model, Monte Carlo results'),
@@ -303,7 +304,7 @@ app.layout = html.Div(children=[
     dcc.Graph(
         id='fig6',
         figure=fig6,
-     ),
+    ),
     html.Div(children='Please take the median graphs below with a grain of salt,'
                       ' as the median will reflect the mid-range of the parameters distribution, '
                       'and to an extent will negate the uniform distribution we chose for the analysis'),
