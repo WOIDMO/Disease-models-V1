@@ -164,7 +164,7 @@ print('min / max R')
 print(min(df_results['peak R']), max(df_results['peak R']))
 print(min(df_results['total IFR']), max(df_results['total IFR']))
 
-#############  try using dash  ###############
+#############  use dash  ###############
 
 
 app = dash.Dash()
