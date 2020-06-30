@@ -45,7 +45,7 @@ def Model(initial_cases, initial_date, N, p_immune, beta, gamma, delta, p_I_to_C
 N = 100000  # size of initial population
 initial_cases = 10  # initial number of Exposed. I chose 10 to stay away from the critical community size at the onset of the epidemic.
 
-num_reps = 10  # number of Monte Carlo rounds. 200 is good enough for the median graphs, 1000 is requred for smoother histograms
+num_reps = 20  # number of Monte Carlo rounds. 200 is good enough for the median graphs, 1000 is requred for smoother histograms
 
 disease = 'Covid_19'  # supported options: 'Covid_19', 'Influenza_seasonal', or 'deterministic_test'
 print(disease)
@@ -164,8 +164,15 @@ print('min / max R')
 print(min(df_results['peak R']), max(df_results['peak R']))
 print(min(df_results['total IFR']), max(df_results['total IFR']))
 
-#############  try using dash  ###############
+############# write csv to local path #############
+# pay attention to the leading "r" before the filename!
+df_results.to_csv(r'C:\Users\ronha\PycharmProjects\infectious_disease_modelling\data\export_df_results.csv', index = False, header=True)
+df_I_vs_t.to_csv(r'C:\Users\ronha\PycharmProjects\infectious_disease_modelling\data\export_df_I_vs_t.csv', index = False, header=True)
+df_C_vs_t.to_csv(r'C:\Users\ronha\PycharmProjects\infectious_disease_modelling\data\export_df_C_vs_t.csv', index = False, header=True)
+df_D_vs_t.to_csv(r'C:\Users\ronha\PycharmProjects\infectious_disease_modelling\data\export_df_D_vs_t.csv', index = False, header=True)
+df_IFR_vs_t.to_csv(r'C:\Users\ronha\PycharmProjects\infectious_disease_modelling\data\export_df_IFR_vs_t.csv', index = False, header=True)
 
+#############  use dash  ###############
 
 app = dash.Dash()
 #  plot using ploty express, with the intention to transfer it to DCC as explained in https://dash.plotly.com/dash-core-components/graph
@@ -264,12 +271,22 @@ app.layout = html.Div(children=[
     html.H1(children='SEIR Model, Monte Carlo results'),
     html.H2(children=disease),
     html.Div(children=['Population size =', N]),
-    html.Div(children=['initial number of Infected =', initial_cases]),
-    html.Div(children=['number of Monte Carlo Runs =', num_reps]),
-    html.Div(children='other important parameters, all with uniformly-distributed ranges set in the code:'
-                      ' % of immuned population, R0, T_incubation, T_infected, '
-                      'P(I2C), P(C2D), PT(I2C), T(C2R), T(C2D)'),
-    html.Div(children='''
+    html.Div(children=['Initial number of Infected =', initial_cases]),
+    html.Div(children=['Number of Monte Carlo Runs =', num_reps]),
+    html.Div(children='The following parameters are all with uniformly-distributed ranges set in the code:'),
+    html.Div(children=['% immuned population is between =', round(100*(p_immune_avg-p_immune_err), 1), ' and ', round(100*(p_immune_avg+p_immune_err), 1), ' %']),
+    html.Div(children=['R0 is between =', round(R_0_avg - R_0_err, 1), ' and ', round(R_0_avg + R_0_err, 1), ' %']),
+    html.Div(children=[' Incubation time is between =', round(T_incubation_avg - T_incubation_err, 1), ' and ', round(T_incubation_avg + T_incubation_err, 1), ' days']),
+    html.Div(children=[' Infectious time is between =', round(T_infectious_avg - T_infectious_err, 1), ' and ', round(T_infectious_avg + T_infectious_err, 1), ' days']),
+    html.Div(children=['% infected that need ICU is between =', round(100*(p_I_to_C_avg-p_I_to_C_err), 1), ' and ', round(100*(p_I_to_C_avg+p_I_to_C_err), 1), ' %']),
+    html.Div(children=['% ICU patients dying is between =', round(100*(p_C_to_D_avg-p_C_to_D_err), 1), ' and ', round(100*(p_C_to_D_avg+p_C_to_D_err), 1), ' %']),
+    html.Div(children=['Time from being infected to needing ICU is between =', round(T_I_to_C_avg - T_I_to_C_err, 1), ' and ',
+                       round(T_I_to_C_avg + T_I_to_C_err, 1), ' days']),
+    html.Div(children=['Time from needing ICU to dying is between =', round(T_C_to_D_avg - T_C_to_D_err, 1),
+                       ' and ', round(T_C_to_D_avg + T_C_to_D_err, 1), ' days']),
+    html.Div(children=['Time from needing ICU to recovering is between =', round(T_C_to_R_avg - T_C_to_R_err, 1),
+                       ' and ', round(T_C_to_R_avg + T_C_to_R_err, 1), ' days']),
+     html.Div(children='''
         I wish I could add an interactive section to present and adjust all parameters, 
         not only initial population... 
         and to find a way to arrange the figure side by side rather than one after the other...  
