@@ -45,62 +45,66 @@ def Model(initial_cases, initial_date, N, p_immune, beta, gamma, delta, p_I_to_C
 N = 100000  # size of initial population
 initial_cases = 10  # initial number of Exposed. I chose 10 to stay away from the critical community size at the onset of the epidemic.
 
-num_reps = 50  # for Monte Carlo
+num_reps = 10  # number of Monte Carlo rounds. 200 is good enough for the median graphs, 1000 is requred for smoother histograms
 
 disease = 'Covid_19'  # supported options: 'Covid_19', 'Influenza_seasonal', or 'deterministic_test'
 print(disease)
-# times below are assumed to be common for Covid-19 and influenza seasonal
-# todo: if supporting more disease, and they don't share the same timing, move those into the "if disease " above.
-T_I_to_C = np.random.uniform(4.5, 12.5, num_reps).round(2)  # time to transition from Infected to Critical [days]
-T_C_to_D = np.random.uniform(5, 9, num_reps).round(2)  # time to transition from Critical to Dead [days]
-T_C_to_R = np.random.uniform(12, 16, num_reps).round(2)  # time to transition from Critical to Recovered [days]
-
 # The section below is intended to be modular, so we can easily add other disease model.
 if disease == 'Covid_19':
-    R_0 = np.random.uniform(1.94, 5.7, num_reps).round(2)  # Initial R0
-    p_immune = np.random.uniform(5 / 100, 7 / 100, num_reps).round(3)  # portion of immuned population
-    T_infectious = np.random.uniform(8, 12, num_reps).round(2)  # infectious period [days]
-    T_incubation = np.random.uniform(3, 8, num_reps).round(
-        2)  # incubation period [days] - not contagious during this time
-    gamma = 1.0 / T_infectious
-    delta = 1.0 / T_incubation
-    beta = R_0 / T_infectious
-    p_I_to_C = np.random.uniform(3 / 100, 8 / 100, num_reps).round(
-        3)  # overall probability of transition from Infected to Critical
-    p_C_to_D = np.random.uniform(25 / 100, 40 / 100, num_reps).round(
-        3)  # overall probability of transition from Infected to Critical
+    R_0_avg, R_0_err = 3.82, 2.08
+    p_immune_avg, p_immune_err = 6 / 100, 1 / 100
+    T_infectious_avg, T_infectious_err = 10, 2
+    T_incubation_avg, T_incubation_err = 5.5, 2.5
+    p_I_to_C_avg, p_I_to_C_err = 5 / 100, 3 / 100
+    p_C_to_D_avg, p_C_to_D_err = 32.5 / 100, 7.5 / 100
+    T_I_to_C_avg, T_I_to_C_err = 8.5, 4
+    T_C_to_D_avg, T_C_to_D_err = 7, 2
+    T_C_to_R_avg, T_C_to_R_err = 14, 2
 elif disease == 'Influenza_seasonal':
-    R_0 = np.random.uniform(0.9, 2.1, num_reps).round(2)  # Initial R0
-    p_immune = np.random.uniform(15 / 100, 25 / 100, num_reps).round(3)  # portion of immuned population
-    T_infectious = np.random.uniform(3, 10, num_reps).round(2)  # infectious period [days]
-    T_incubation = np.random.uniform(1, 4, num_reps).round(
-        2)  # incubation period [days] - not contagious during this time
-    gamma = 1.0 / T_infectious
-    delta = 1.0 / T_incubation
-    beta = R_0 / T_infectious
-    p_I_to_C = np.random.uniform(0.25 / 100, 0.75 / 100, num_reps).round(
-        3)  # overall probability of transition from Infected to Critical
-    p_C_to_D = np.random.uniform(33 / 100, 48 / 100, num_reps).round(
-        3)  # overall probability of transition from Infected to Critical
+    R_0_avg, R_0_err = 1.5, 0.6
+    p_immune_avg, p_immune_err = 20 / 100, 5 / 100
+    T_infectious_avg, T_infectious_err = 6.5, 3.5
+    T_incubation_avg, T_incubation_err = 2.5, 1.5
+    p_I_to_C_avg, p_I_to_C_err = 0.5 / 100, 0.25 / 100
+    p_C_to_D_avg, p_C_to_D_err = 40.5 / 100, 7.5 / 100
+    T_I_to_C_avg, T_I_to_C_err = 8.5, 4
+    T_C_to_D_avg, T_C_to_D_err = 7, 2
+    T_C_to_R_avg, T_C_to_R_err = 14, 2
 elif disease == 'deterministic_test':
-    R_0 = np.random.uniform(3, 3, num_reps).round(2)  # Initial R0
-    p_immune = np.random.uniform(0 / 100, 0 / 100, num_reps).round(3)  # portion of immuned population
-    T_infectious = np.random.uniform(9, 9, num_reps).round(2)  # infectious period [days]
-    T_incubation = np.random.uniform(3, 3, num_reps).round(
-        2)  # incubation period [days] - not contagious during this time
-    gamma = 1.0 / T_infectious
-    delta = 1.0 / T_incubation
-    beta = R_0 / T_infectious
-    p_I_to_C = np.random.uniform(5 / 100, 5 / 100, num_reps).round(
-        3)  # overall probability of transition from Infected to Critical
-    p_C_to_D = np.random.uniform(30 / 100, 30 / 100, num_reps).round(
-        3)  # overall probability of transition from Infected to Critical
-    T_I_to_C = np.random.uniform(12, 12, num_reps).round(2)  # time to transition from Infected to Critical [days]
-    T_C_to_D = np.random.uniform(7.5, 7.5, num_reps).round(2)  # time to transition from Critical to Dead [days]
-    T_C_to_R = np.random.uniform(6.5, 6.5, num_reps).round(2)  # time to transition from Critical to Recovered [days]
+    R_0_avg, R_0_err = 3.0, 0
+    p_immune_avg, p_immune_err = 0, 0
+    T_infectious_avg, T_infectious_err = 9, 0
+    T_incubation_avg, T_incubation_err = 3, 0
+    p_I_to_C_avg, p_I_to_C_err = 5 / 100, 0
+    p_C_to_D_avg, p_C_to_D_err = 30 / 100, 0
+    T_I_to_C_avg, T_I_to_C_err = 12, 0
+    T_C_to_D_avg, T_C_to_D_err = 7.5, 0
+    T_C_to_R_avg, T_C_to_R_err = 6.5, 0
 else:
     print('undefined disease!')
 
+# Now roll the dice num_reps times for each parameter:
+p_immune = np.random.uniform(p_immune_avg - p_immune_err, p_immune_avg + p_immune_err, num_reps).round(
+    3)  # portion of immuned population
+R_0 = np.random.uniform(R_0_avg - R_0_err, R_0_avg + R_0_err, num_reps).round(2)  # Initial R0
+T_infectious = np.random.uniform(T_infectious_avg - T_infectious_err, T_infectious_avg + T_infectious_err,
+                                 num_reps).round(2)  # infectious period [days]
+T_incubation = np.random.uniform(T_incubation_avg - T_incubation_err, T_incubation_avg + T_incubation_err,
+                                 num_reps).round(2)  # incubation period [days] - not contagious during this time
+T_I_to_C = np.random.uniform(T_I_to_C_avg - T_I_to_C_err, T_I_to_C_avg + T_I_to_C_err, num_reps).round(
+    2)  # time to transition from Infected to Critical [days]
+T_C_to_D = np.random.uniform(T_C_to_D_avg - T_C_to_D_err, T_C_to_D_avg + T_C_to_D_err, num_reps).round(
+    2)  # time to transition from Critical to Dead [days]
+T_C_to_R = np.random.uniform(T_C_to_R_avg - T_C_to_R_err, T_C_to_R_avg + T_C_to_R_err, num_reps).round(
+    2)  # time to transition from Critical to Recovered [days]
+p_I_to_C = np.random.uniform(p_I_to_C_avg - p_I_to_C_err, p_I_to_C_avg + p_I_to_C_err, num_reps).round(
+    3)  # overall probability of transition from Infected to Critical
+p_C_to_D = np.random.uniform(p_C_to_D_avg - p_C_to_D_err, p_C_to_D_avg + p_C_to_D_err, num_reps).round(
+    3)  # overall probability of transition from Infected to Critical
+
+gamma = 1.0 / T_infectious
+delta = 1.0 / T_incubation
+beta = R_0 / T_infectious
 initial_date = 0
 
 ############### Monte Carlo ###############
