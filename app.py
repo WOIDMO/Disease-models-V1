@@ -45,7 +45,7 @@ def Model(initial_cases, initial_date, N, p_immune, beta, gamma, delta, p_I_to_C
 N = 100000  # size of initial population
 initial_cases = 10  # initial number of Exposed. I chose 10 to stay away from the critical community size at the onset of the epidemic.
 
-num_reps = 10  # number of Monte Carlo rounds. 200 is good enough for the median graphs, 1000 is requred for smoother histograms
+num_reps = 200  # number of Monte Carlo rounds. 200 is good enough for the median graphs, 1000 is requred for smoother histograms
 
 disease = 'Covid_19'  # supported options: 'Covid_19', 'Influenza_seasonal', or 'deterministic_test'
 print(disease)
@@ -163,6 +163,14 @@ print('min(IFR), max(IFR)')
 print('min / max R')
 print(min(df_results['peak R']), max(df_results['peak R']))
 print(min(df_results['total IFR']), max(df_results['total IFR']))
+
+############# write csv to local path #############
+# pay attention to the leading "r" before the filename!
+df_results.to_csv(r'C:\Users\ronha\PycharmProjects\infectious_disease_modelling\data\export_df_results.csv', index = False, header=True)
+df_I_vs_t.to_csv(r'C:\Users\ronha\PycharmProjects\infectious_disease_modelling\data\export_df_I_vs_t.csv', index = False, header=True)
+df_C_vs_t.to_csv(r'C:\Users\ronha\PycharmProjects\infectious_disease_modelling\data\export_df_C_vs_t.csv', index = False, header=True)
+df_D_vs_t.to_csv(r'C:\Users\ronha\PycharmProjects\infectious_disease_modelling\data\export_df_D_vs_t.csv', index = False, header=True)
+df_IFR_vs_t.to_csv(r'C:\Users\ronha\PycharmProjects\infectious_disease_modelling\data\export_df_IFR_vs_t.csv', index = False, header=True)
 
 #############  use dash  ###############
 
