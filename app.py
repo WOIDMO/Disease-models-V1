@@ -166,7 +166,6 @@ print(min(df_results['total IFR']), max(df_results['total IFR']))
 
 #############  use dash  ###############
 
-
 app = dash.Dash()
 #  plot using ploty express, with the intention to transfer it to DCC as explained in https://dash.plotly.com/dash-core-components/graph
 #  could not make it run with the regular dcc.Graph( ...  id='example-graph', ... figure={ ...  'data': [
