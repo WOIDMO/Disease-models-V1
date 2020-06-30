@@ -50,6 +50,7 @@ num_reps = 10  # number of Monte Carlo rounds. 200 is good enough for the median
 disease = 'Covid_19'  # supported options: 'Covid_19', 'Influenza_seasonal', or 'deterministic_test'
 print(disease)
 # The section below is intended to be modular, so we can easily add other disease model.
+# the parameter range will be randomly drawn between avg-err and avg+err.
 if disease == 'Covid_19':
     R_0_avg, R_0_err = 3.82, 2.08
     p_immune_avg, p_immune_err = 6 / 100, 1 / 100
@@ -130,7 +131,7 @@ for i in range(num_reps):
                                             'peak C': max(C), 'max D': max(D), 'total IFR': max(total_CFR)})
     df_results = df_results.append(df_temp)
     # plot progress to terminal, to avoid the feeling it got stuck...
-    if round(i/25, 0) == (i/25):
+    if round(i / 25, 0) == (i / 25):
         print('in MC round ', i, 'out of ', num_reps)
 
     # thanks to
@@ -214,7 +215,9 @@ fig6 = px.histogram(df_results, x="max D",
                     width=600, height=400,
                     )
 
-fig7 = px.line(df_I_vs_t.T.apply(np.median, axis=1),
+df_I_median_std = pd.DataFrame(data={'median': df_I_vs_t.T.apply(np.median, axis=1),
+                                     'median+STD': df_I_vs_t.T.apply(np.std, axis=1) + df_I_vs_t.T.apply(np.median, axis=1)})
+fig7 = px.line(df_I_median_std,
                title="Median of Infected vs. time, over all Monte Carlo run",
                width=600, height=400,
                labels={  # replaces default labels by column name
@@ -222,8 +225,10 @@ fig7 = px.line(df_I_vs_t.T.apply(np.median, axis=1),
                    "index": "time [days]", "value": "Median of Infected"
                },
                )
-fig7.layout.update(showlegend=False)  # eliminate legends
-fig8 = px.line(df_C_vs_t.T.apply(np.median, axis=1),
+
+df_C_median_std = pd.DataFrame(data={'median': df_C_vs_t.T.apply(np.median, axis=1),
+                                     'median+STD': df_C_vs_t.T.apply(np.std, axis=1) + df_C_vs_t.T.apply(np.median, axis=1)})
+fig8 = px.line(df_C_median_std,
                title="Median of Critical vs. time, over all Monte Carlo run",
                width=600, height=400,
                labels={  # replaces default labels by column name
@@ -231,9 +236,10 @@ fig8 = px.line(df_C_vs_t.T.apply(np.median, axis=1),
                    "index": "time [days]", "value": "Median of Critical"
                },
                )
-fig8.layout.update(showlegend=False)  # eliminate legends
 
-fig9 = px.line(df_D_vs_t.T.apply(np.median, axis=1),
+df_D_median_std = pd.DataFrame(data={'median': df_D_vs_t.T.apply(np.median, axis=1),
+                                     'median+STD': df_D_vs_t.T.apply(np.std, axis=1) + df_D_vs_t.T.apply(np.median, axis=1)})
+fig9 = px.line(df_D_median_std,
                title="Median of Dead vs. time, over all Monte Carlo run",
                width=600, height=400,
                labels={  # replaces default labels by column name
@@ -241,18 +247,17 @@ fig9 = px.line(df_D_vs_t.T.apply(np.median, axis=1),
                    "index": "time [days]", "value": "Median of Dead"
                },
                )
-fig9.layout.update(showlegend=False)  # eliminate legends
 
-fig10 = px.line(df_IFR_vs_t.T.apply(np.median, axis=1),
-               title="Median of IFR vs. time, over all Monte Carlo run",
-               width=600, height=400,
-               labels={  # replaces default labels by column name
-                   # ... thanks to https://plotly.com/python/styling-plotly-express/
-                   "index": "time [days]", "value": "Median of IFR"
-               },
-               )
-fig10.layout.update(showlegend=False)  # eliminate legends
-
+df_IFR_median_std = pd.DataFrame(data={'median': df_IFR_vs_t.T.apply(np.median, axis=1),
+                                     'median+STD': df_IFR_vs_t.T.apply(np.std, axis=1) + df_IFR_vs_t.T.apply(np.median, axis=1)})
+fig10 = px.line(df_IFR_median_std,
+                title="Median of IFR vs. time, over all Monte Carlo run",
+                width=600, height=400,
+                labels={  # replaces default labels by column name
+                    # ... thanks to https://plotly.com/python/styling-plotly-express/
+                    "index": "time [days]", "value": "Median of IFR"
+                },
+                )
 
 
 app.layout = html.Div(children=[
@@ -293,7 +298,7 @@ app.layout = html.Div(children=[
     dcc.Graph(
         id='fig6',
         figure=fig6,
-     ),
+    ),
     html.Div(children='Please take the median graphs below with a grain of salt,'
                       ' as the median will reflect the mid-range of the parameters distribution, '
                       'and to an extent will negate the uniform distribution we chose for the analysis'),
