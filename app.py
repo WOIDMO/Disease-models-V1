@@ -47,11 +47,11 @@ def Model(initial_cases, initial_date, N, p_immune, beta, gamma, delta, p_I_to_C
 population = 100000  # size of initial population
 initial_cases = 10  # initial number of Exposed. I chose 10 to stay away from the critical community size at the onset of the epidemic.
 
-num_reps = 4  # for Monte Carlo; num_reps = 1000 is a good number but takes a long time.
+num_reps = 10  # for Monte Carlo; num_reps = 1000 is a good number but takes a long time.
 # num_reps = 200 is good for the Median graphs,
 # and also gives a good sense on how the histogram will look like.
 
-disease = 'deterministic_test'  # supported options: 'Covid_19', 'Influenza_seasonal', or 'deterministic_test'
+disease = 'Covid_19'  # supported options: 'Covid_19', 'Influenza_seasonal', or 'deterministic_test'
 print(disease)
 
 # The section below is intended to be modular, so we can easily add other disease model.
@@ -269,30 +269,50 @@ fig10 = px.line(medianRangeIFR_df,
                 },
                 )
 
-#################  try by following the example first, and only than populate with my things
+#################  Dash app and call backs  ############################
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
 
 app.layout = html.Div([
-    html.I("average R0: "),
-    dcc.Input(id='R_0_avg', value=R_0_avg, type='number'),
-    html.I(" +/- "),
-    dcc.Input(id='R_0_err', value=R_0_err, type='number'),
-    html.I(" unitless"),
+    html.H1("SEIR Monte - Carlo model"),
+    html.I("Number of Monte Carlo runs: "),
+    dcc.Input(id='num_reps', value=num_reps, type='number'),
+    html.I("Population size: "), dcc.Input(id='population', value=population, type='number'),
+    html.I("Number of originally infected: "), dcc.Input(id='initial_cases', value=initial_cases, type='number'), html.Br(),
+    html.I("% immuned: "), dcc.Input(id='p_immune_avg_p', value=p_immune_avg*100, type='number'),
+    html.I(" +/- "), dcc.Input(id='p_immune_err_p', value=p_immune_err*100, type='number'),
+    html.I(" [%]     "),
+    html.I("R0: "), dcc.Input(id='R_0_avg', value=R_0_avg, type='number'),
+    html.I(" +/- "), dcc.Input(id='R_0_err', value=R_0_err, type='number'), html.Br(),
+    html.I("Incubation time: "), dcc.Input(id='T_incubation_avg', value=T_incubation_avg, type='number'),
+    html.I(" +/- "), dcc.Input(id='T_incubation_err', value=T_incubation_err, type='number'), html.I(" [days]     "),
+    html.I(" Infectious time: "), dcc.Input(id='T_infectious_avg', value=T_infectious_avg, type='number'),
+    html.I(" +/- "), dcc.Input(id='T_infectious_err', value=T_infectious_err, type='number'), html.I(" [days]   "), html.Br(),
     html.H5("Enter new parameters above, than press Submit button"),
     html.Button(id='submit-button-state', n_clicks=0, children='Submit'),
     dcc.Graph(id='Infected-vs-time'),
-    html.Div(id='my-div')
+    html.Div(id='my-div'),
 ])
 
 
 @app.callback(
     Output('Infected-vs-time', 'figure'),
     [Input('submit-button-state', 'n_clicks')],
-    [State('R_0_avg', 'value'), State('R_0_err', 'value')])
-def update_figure(n_clicks, R_0_avg, R_0_err):
-    # Now roll the dice num_reps times for each parameter:
+    [State('num_reps', 'value'), State('population', 'value'), State('initial_cases', 'value'),
+     State('p_immune_avg_p', 'value'), State('p_immune_err_p', 'value'),
+     State('R_0_avg', 'value'), State('R_0_err', 'value'),
+     State('T_incubation_avg', 'value'), State('T_incubation_err', 'value'),
+     State('T_infectious_avg', 'value'), State('T_infectious_err', 'value'),],)
+
+def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, p_immune_err_p, R_0_avg, R_0_err,
+                  T_incubation_avg, T_incubation_err,
+                  T_infectious_avg, T_infectious_err,
+                  ):
+    p_immune_avg = p_immune_avg_p /100
+    p_immune_err = p_immune_err_p /100
+
+    #  in callback Now roll the dice num_reps times for each parameter:
     p_immune = np.random.uniform(p_immune_avg - p_immune_err, p_immune_avg + p_immune_err, num_reps).round(
         3)  # portion of immuned population
     R_0 = np.random.uniform(R_0_avg - R_0_err, R_0_avg + R_0_err, num_reps).round(2)  # Initial R0
@@ -316,7 +336,7 @@ def update_figure(n_clicks, R_0_avg, R_0_err):
     beta = R_0 / T_infectious
     initial_date = 0
 
-    ############### Monte Carlo ###############
+    ############### Monte Carlo in callback ###############
     print('start Monte-Carlo')
     df_results = pd.DataFrame({})  # initiate as an empty DataFrame so I can append to it in the Monte Carlo loop
     df_I_vs_t = pd.DataFrame([])  # initiate as an empty DataFrame so I can append to it in the Monte Carlo loop
@@ -374,466 +394,3 @@ if __name__ == '__main__':
     app.run_server(debug=True)
 
 
-
-# ############################################ the dash app layout ################################################
-# external_stylesheets = [dbc.themes.BOOTSTRAP]
-#
-# app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
-# app.title = "MonteCarlo"
-#
-# # these are the controls where the parameters can be tuned.
-# # They are not placed on the screen here, we just define them.
-# # Each separate input (e.g. a slider for the fatality rate) is placed
-# # in its own "dbc.FormGroup" and gets a "dbc.Label" where we put its name.
-# # The sliders use the predefined "dcc.Slider"-class, the numeric inputs
-# # use "dbc.Input", etc., so we don't have to tweak anything ourselves.
-# # The controls are wrappen in a "dbc.Card" so they look nice.
-# controls = dbc.Card(
-#     [
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("Number of Monte Carlo loops to run"),
-#                 dbc.Input(
-#                     id="num_reps", type="number", placeholder="num_reps",
-#                     min=1, max=5000, step=1, value=num_reps,
-#                 )
-#             ]
-#         ),
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("Initial Cases"),
-#                 dbc.Input(
-#                     id="initial_cases", type="number", placeholder="initial_cases",
-#                     min=1, max=1_000_000, step=1, value=initial_cases,
-#                 )
-#             ]
-#         ),
-#
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("population"),
-#                 dbc.Input(
-#                     id="population", type="number", placeholder="population",
-#                     min=10_000, max=1_000_000_000, step=10_000, value=population,
-#                 )
-#             ]
-#         ),
-#
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("average fraction of population immuned"),
-#                 dbc.Input(
-#                     id="p_immune_avg", type="number", placeholder="p_immune_avg",
-#                     min=0, max=1, step=0.005, value=p_immune_avg,
-#                 )
-#             ]
-#         ),
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("+/- fraction of population immuned"),
-#                 dbc.Input(
-#                     id="p_immune_err", type="number", placeholder="p_immune_err",
-#                     min=0, max=1, step=0.005, value=p_immune_err,
-#                 )
-#             ]
-#         ),
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("average R0"),
-#                 dbc.Input(
-#                     id="R_0_avg", type="number", placeholder="R_0_avg",
-#                     min=1, max=10, step=0.05, value=R_0_avg,
-#                 )
-#             ]
-#         ),
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("+/- R0"),
-#                 dbc.Input(
-#                     id="R_0_err", type="number", placeholder="R_0_err",
-#                     min=0, max=10, step=0.05, value=R_0_err,
-#                 )
-#             ]
-#         ),
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("average probability of going to ICU when infected [fraction]"),
-#                 dbc.Input(
-#                     id="p_I_to_C_avg", type="number", placeholder="p_I_to_C_avg",
-#                     min=0, max=1, step=0.001, value=p_I_to_C_avg,
-#                 )
-#             ]
-#         ),
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("+/- probability of going to ICU when infected [fraction]"),
-#                 dbc.Input(
-#                     id="p_I_to_C_err", type="number", placeholder="p_I_to_C_err",
-#                     min=0, max=1, step=0.001, value=p_I_to_C_err,
-#                 )
-#             ]
-#         ),
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("average probability of dying in ICU [fraction]"),
-#                 dbc.Input(
-#                     id="p_C_to_D_avg", type="number", placeholder="p_C_to_D_avg",
-#                     min=0, max=1, step=0.001, value=p_C_to_D_avg,
-#                 )
-#             ]
-#         ),
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("+/- probability of dying in ICU [fraction]"),
-#                 dbc.Input(
-#                     id="p_C_to_D_err", type="number", placeholder="p_C_to_D_err",
-#                     min=0, max=1, step=0.001, value=p_C_to_D_err,
-#                 )
-#             ]
-#         ),
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("average incubation time [days]"),
-#                 dbc.Input(
-#                     id="T_incubation_avg", type="number", placeholder="T_incubation_avg",
-#                     min=1, max=21, step=0.05, value=T_incubation_avg,
-#                 )
-#             ]
-#         ),
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("+/- incubation time [days]"),
-#                 dbc.Input(
-#                     id="T_incubation_err", type="number", placeholder="T_incubation_err",
-#                     min=0, max=7, step=0.1, value=T_incubation_err,
-#                 )
-#             ]
-#         ),
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("average infectious time [days]"),
-#                 dbc.Input(
-#                     id="T_infectious_avg", type="number", placeholder="T_infectious_avg",
-#                     min=1, max=21, step=0.05, value=T_infectious_avg,
-#                 )
-#             ]
-#         ),
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("+/- infectious time [days]"),
-#                 dbc.Input(
-#                     id="T_infectious_err", type="number", placeholder="T_infectious_err",
-#                     min=0, max=7, step=0.1, value=T_infectious_err,
-#                 )
-#             ]
-#         ),
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("average time from infectious to ICU [days]"),
-#                 dbc.Input(
-#                     id="T_I_to_C_avg", type="number", placeholder="T_I_to_C_avg",
-#                     min=1, max=21, step=0.05, value=T_I_to_C_avg,
-#                 )
-#             ]
-#         ),
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("+/- time from infectious to ICU [days]"),
-#                 dbc.Input(
-#                     id="T_I_to_C_err", type="number", placeholder="T_I_to_C_err",
-#                     min=0, max=7, step=0.1, value=T_I_to_C_err,
-#                 )
-#             ]
-#         ),
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("average time to die in ICU [days]"),
-#                 dbc.Input(
-#                     id="T_C_to_D_avg", type="number", placeholder="T_C_to_D_avg",
-#                     min=1, max=21, step=0.05, value=T_C_to_D_avg,
-#                 )
-#             ]
-#         ),
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("+/- time  to die in ICU [days]"),
-#                 dbc.Input(
-#                     id="T_C_to_D_err", type="number", placeholder="T_C_to_D_err",
-#                     min=0, max=7, step=0.1, value=T_C_to_D_err,
-#                 )
-#             ]
-#         ),
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("average time to recover in ICU [days]"),
-#                 dbc.Input(
-#                     id="T_C_to_R_avg", type="number", placeholder="T_C_to_R_avg",
-#                     min=1, max=21, step=0.05, value=T_C_to_R_avg,
-#                 )
-#             ]
-#         ),
-#         dbc.FormGroup(
-#             [
-#                 dbc.Label("+/- time  to recover in ICU [days]"),
-#                 dbc.Input(
-#                     id="T_C_to_R_err", type="number", placeholder="T_C_to_R_err",
-#                     min=0, max=7, step=0.1, value=T_C_to_R_err,
-#                 )
-#             ]
-#         ),
-#
-#         dbc.Button("Apply", id="submit-button-state",
-#                    color="primary", block=True)
-#     ],
-#     body=True,
-# )
-
-# # layout for the whole page
-# app.layout = dbc.Container(
-#     [
-#         # first, a jumbotron for the description and title
-#         dbc.Jumbotron(
-#             [
-#                 dbc.Container(
-#                     [
-#                         html.H1("MonteCarlo", className="display-3"),
-#                         html.P(
-#                             "Graph results, later change into interactively graph... ",
-#                             className="lead",
-#                         ),
-#                         html.Hr(className="my-2"),
-#                         dcc.Markdown('''
-#
-#                                         put some general instructions here
-#                             '''
-#                                      )
-#                     ],
-#                     fluid=True,
-#                 )
-#             ],
-#             fluid=True,
-#             className="jumbotron bg-white text-dark"
-#         ),
-#         # now onto the main page, i.e. the controls on the left
-#         # and the graphs on the right.
-#         dbc.Row(
-#             [
-#                 # here we place the controls we just defined,
-#                 # and tell them to use up the left 3/12ths of the page.
-#                 dbc.Col(controls, md=3),
-#                 # now we place the graphs on the page, taking up
-#                 # the right 9/12ths.
-#                 dbc.Col(
-#                     [
-#                         # single graph to begin with
-#                         dcc.Graph(id='fig'),
-#                     ],
-#                     md=9
-#                 ),
-#             ],
-#             align="top",
-#         ),
-#     ],
-#     # fluid is set to true so that the page reacts nicely to different sizes etc.
-#     fluid=True,
-# )
-
-
-#
-# app.layout = html.Div(children=[
-#     html.H1(children='SEIR Model, Monte Carlo results'),
-#     html.H2(children=disease),
-#     html.Div(children=['Population size =', N]),
-#     html.Div(children=['initial number of Infected =', initial_cases]),
-#     html.Div(children=['number of Monte Carlo Runs =', num_reps]),
-#     html.Div(children='other important parameters, all with uniformly-distributed ranges set in the code:'
-#                       ' % of immuned population, R0, T_incubation, T_infected, '
-#                       'P(I2C), P(C2D), PT(I2C), T(C2R), T(C2D)'),
-#     html.Div(children='''
-#         I wish I could add an interactive section to present and adjust all parameters,
-#         not only initial population...
-#         and to find a way to arrange the figure side by side rather than one after the other...
-#     '''),
-#     dcc.Graph(
-#         id='fig1',
-#         figure=fig1,
-#         className="six columns",
-#     ),
-#     dcc.Graph(
-#         id='fig2',
-#         figure=fig2,
-#         className="six columns",
-#     ),
-#     dcc.Graph(
-#         id='fig3',
-#         figure=fig3,
-#         className="six columns",
-#     ),
-#
-#     dcc.Graph(
-#         id='fig4',
-#         figure=fig4,
-#     ),
-#     dcc.Graph(
-#         id='fig5',
-#         figure=fig5,
-#     ),
-#     dcc.Graph(
-#         id='fig6',
-#         figure=fig6,
-#     ),
-#     html.Div(children='Please take the median graphs below with a grain of salt,'
-#                       ' as the median will reflect the mid-range of the parameters distribution, '
-#                       'and to an extent will negate the uniform distribution we chose for the analysis'),
-#     dcc.Graph(
-#         id='fig10',
-#         figure=fig10,
-#     ),
-#     dcc.Graph(
-#         id='fig7',
-#         figure=fig7,
-#     ),
-#     dcc.Graph(
-#         id='fig8',
-#         figure=fig8,
-#     ),
-#     dcc.Graph(
-#         id='fig9',
-#         figure=fig9,
-#     )
-
-###   keep the section below commented out to see what did work and what had not (which isdoubly commented out)
-# dcc.Graph(
-#     id='example-graph',
-#     figure={
-#         'data': [
-#             # {'y': df_C_vs_t.T, 'type': 'line'}
-#             {'y': df_C_vs_t.T[2], 'type': 'line'},
-#             {'y': df_C_vs_t.T[3], 'type': 'line'}
-#         ],
-#         'layout': {
-#             'title': disease
-#         }
-#     }
-# )
-# ])
-# app.css.append_css({
-#     'external_url': 'https://codepen.io/chriddyp/pen/bWLwgP.css'})
-
-
-
-############################################ the dash app callbacks ################################################
-
-#
-# @app.callback(
-#     [dash.dependencies.Output('fig', 'figure'),
-#      # dash.dependencies.Output('fig2', 'figure'),
-#      # dash.dependencies.Output('fig3', 'figure'),
-#      # dash.dependencies.Output('fig4', 'figure'),
-#      ],
-#
-#     [dash.dependencies.Input('submit-button-state', 'n_clicks')],
-#
-#     [dash.dependencies.State('num_reps', 'value'),
-#      dash.dependencies.State('initial_cases', 'value'),
-#      dash.dependencies.State('population', 'value'),
-#      dash.dependencies.State('R_0_avg', 'value'),
-#      dash.dependencies.State('R_0_err', 'value'),
-#      dash.dependencies.State('p_immune_avg', 'value'),
-#      dash.dependencies.State('p_immune_err', 'value'),
-#      dash.dependencies.State('p_I_to_C_avg', 'value'),
-#      dash.dependencies.State('p_I_to_C_err', 'value'),
-#      dash.dependencies.State('p_C_to_D_avg', 'value'),
-#      dash.dependencies.State('p_C_to_D_err', 'value'),
-#      dash.dependencies.State('T_incubation_avg', 'value'),
-#      dash.dependencies.State('T_incubation_err', 'value'),
-#      dash.dependencies.State('T_infectious_avg', 'value'),
-#      dash.dependencies.State('T_infectious_err', 'value'),
-#      dash.dependencies.State('T_I_to_C_avg', 'value'),
-#      dash.dependencies.State('T_I_to_C_err', 'value'),
-#      dash.dependencies.State('T_C_to_D_avg', 'value'),
-#      dash.dependencies.State('T_C_to_D_err', 'value'),
-#      dash.dependencies.State('T_C_to_R_avg', 'value'),
-#      dash.dependencies.State('T_C_to_R_err', 'value'),
-#      ])
-# def update_graph(_, num_reps, initial_cases, population, R_0_avg, R_0_err, p_immune_avg, p_immune_err, p_I_to_C_avg,
-#                  p_I_to_C_err, p_C_to_D_avg, p_C_to_D_err,
-#                  T_incubation_avg, T_incubation_err, T_infectious_avg, T_infectious_err, T_I_to_C_avg, T_I_to_C_err,
-#                  T_C_to_D_avg, T_C_to_D_err, T_C_to_R_avg, T_C_to_R_err):
-#     p_immune = np.random.uniform(p_immune_avg - p_immune_err, p_immune_avg + p_immune_err, num_reps).round(
-#         3)  # portion of immuned population
-#     R_0 = np.random.uniform(R_0_avg - R_0_err, R_0_avg + R_0_err, num_reps).round(2)  # Initial R0
-#     T_infectious = np.random.uniform(T_infectious_avg - T_infectious_err, T_infectious_avg + T_infectious_err,
-#                                      num_reps).round(2)  # infectious period [days]
-#     T_incubation = np.random.uniform(T_incubation_avg - T_incubation_err, T_incubation_avg + T_incubation_err,
-#                                      num_reps).round(2)  # incubation period [days] - not contagious during this time
-#     T_I_to_C = np.random.uniform(T_I_to_C_avg - T_I_to_C_err, T_I_to_C_avg + T_I_to_C_err, num_reps).round(
-#         2)  # time to transition from Infected to Critical [days]
-#     T_C_to_D = np.random.uniform(T_C_to_D_avg - T_C_to_D_err, T_C_to_D_avg + T_C_to_D_err, num_reps).round(
-#         2)  # time to transition from Critical to Dead [days]
-#     T_C_to_R = np.random.uniform(T_C_to_R_avg - T_C_to_R_err, T_C_to_R_avg + T_C_to_R_err, num_reps).round(
-#         2)  # time to transition from Critical to Recovered [days]
-#     p_I_to_C = np.random.uniform(p_I_to_C_avg - p_I_to_C_err, p_I_to_C_avg + p_I_to_C_err, num_reps).round(
-#         3)  # overall probability of transition from Infected to Critical
-#     p_C_to_D = np.random.uniform(p_C_to_D_avg - p_C_to_D_err, p_C_to_D_avg + p_C_to_D_err, num_reps).round(
-#         3)  # overall probability of transition from Infected to Critical
-#
-#     gamma = 1.0 / T_infectious
-#     delta = 1.0 / T_incubation
-#     beta = R_0 / T_infectious
-#     initial_date = 0
-#
-#     df_results = pd.DataFrame({})  # initiate as an empty DataFrame so I can append to it in the Monte Carlo loop
-#     df_I_vs_t = pd.DataFrame([])  # initiate as an empty DataFrame so I can append to it in the Monte Carlo loop
-#     I_vs_t = []
-#     df_C_vs_t = pd.DataFrame([])  # initiate as an empty DataFrame so I can append to it in the Monte Carlo loop
-#     C_vs_t = []
-#     df_D_vs_t = pd.DataFrame([])  # initiate as an empty DataFrame so I can append to it in the Monte Carlo loop
-#     D_vs_t = []
-#     df_IFR_vs_t = pd.DataFrame([])  # initiate as an empty DataFrame so I can append to it in the Monte Carlo loop
-#     IFR_vs_t = []
-#     for i in range(num_reps):
-#         time, S, E, I, C, R, D, total_CFR, daily_CFR = Model(initial_cases, initial_date, population, p_immune[i],
-#                                                              beta[i],
-#                                                              gamma[i],
-#                                                              delta[i], p_I_to_C[i], T_I_to_C[i], p_C_to_D[i],
-#                                                              T_C_to_R[i],
-#                                                              T_C_to_D[i])
-#         df_temp = pd.DataFrame(index=[i], data={'R_0': R_0[i], 'immune %': p_immune[i] * 100,
-#                                                 'T_infectious': T_infectious[i], 'T_incubation': T_incubation[i],
-#                                                 'p_I_to_C%': p_I_to_C[i] * 100, 'p_C_to_D%': p_C_to_D[i] * 100,
-#                                                 'T_I_to_C': T_I_to_C[i], 'T_C_to_R': T_C_to_R[i],
-#                                                 'T_C_to_D': T_C_to_D[i],
-#                                                 'peak E': max(E), 'peak I': max(I), 'peak R': max(R),
-#                                                 'peak C': max(C), 'max D': max(D), 'total IFR': max(total_CFR)})
-#         df_results = df_results.append(df_temp)
-#         # plot progress to terminal, to avoid the feeling it got stuck...
-#         if round(i / 25, 0) == (i / 25):
-#             print('in MC round ', i, 'out of ', num_reps)
-#
-#         # thanks to
-#         # https://stackoverflow.com/questions/31674557/how-to-append-rows-in-a-pandas-dataframe-in-a-for-loop for this method
-#         IFR_vs_t.append(total_CFR)
-#         I_vs_t.append(I)
-#         D_vs_t.append(D)
-#         C_vs_t.append(C)
-#         df_IFR_vs_t = pd.DataFrame(IFR_vs_t)  # compartment value for each day is appended as new row
-#         df_I_vs_t = pd.DataFrame(I_vs_t)  # compartment value for each day is appended as new row
-#         df_C_vs_t = pd.DataFrame(C_vs_t)  # compartment value for each day is appended as new row
-#         df_D_vs_t = pd.DataFrame(D_vs_t)  # compartment value for each day is appended as new row
-#         df_temp = df_I_vs_t[1:20].T
-#         fig = px.line(df_temp,
-#                       # title="Number of Infected vs. time, per Monte Carlo run (1st 20)",
-#                       # width=600, height=400,
-#                       # labels={  # replaces default labels by column name
-#                       #     # ... thanks to https://plotly.com/python/styling-plotly-express/
-#                       #     "index": "time [days]", "value": "Number of Infected"
-#                       # },
-#                       )
-#         # fig.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
-#
-#
-#     return fig
-#
-# if __name__ == '__main__':
-#     app.run_server(debug=True)
