@@ -47,7 +47,7 @@ def Model(initial_cases, initial_date, N, p_immune, beta, gamma, delta, p_I_to_C
 population = 100000  # size of initial population
 initial_cases = 10  # initial number of Exposed. I chose 10 to stay away from the critical community size at the onset of the epidemic.
 
-num_reps = 3  # for Monte Carlo; num_reps = 1000 is a good number but takes a long time.
+num_reps = 4  # for Monte Carlo; num_reps = 1000 is a good number but takes a long time.
 # num_reps = 200 is good for the Median graphs,
 # and also gives a good sense on how the histogram will look like.
 
@@ -292,6 +292,70 @@ app.layout = html.Div([
     [Input('submit-button-state', 'n_clicks')],
     [State('R_0_avg', 'value'), State('R_0_err', 'value')])
 def update_figure(n_clicks, R_0_avg, R_0_err):
+    # Now roll the dice num_reps times for each parameter:
+    p_immune = np.random.uniform(p_immune_avg - p_immune_err, p_immune_avg + p_immune_err, num_reps).round(
+        3)  # portion of immuned population
+    R_0 = np.random.uniform(R_0_avg - R_0_err, R_0_avg + R_0_err, num_reps).round(2)  # Initial R0
+    T_infectious = np.random.uniform(T_infectious_avg - T_infectious_err, T_infectious_avg + T_infectious_err,
+                                     num_reps).round(2)  # infectious period [days]
+    T_incubation = np.random.uniform(T_incubation_avg - T_incubation_err, T_incubation_avg + T_incubation_err,
+                                     num_reps).round(2)  # incubation period [days] - not contagious during this time
+    T_I_to_C = np.random.uniform(T_I_to_C_avg - T_I_to_C_err, T_I_to_C_avg + T_I_to_C_err, num_reps).round(
+        2)  # time to transition from Infected to Critical [days]
+    T_C_to_D = np.random.uniform(T_C_to_D_avg - T_C_to_D_err, T_C_to_D_avg + T_C_to_D_err, num_reps).round(
+        2)  # time to transition from Critical to Dead [days]
+    T_C_to_R = np.random.uniform(T_C_to_R_avg - T_C_to_R_err, T_C_to_R_avg + T_C_to_R_err, num_reps).round(
+        2)  # time to transition from Critical to Recovered [days]
+    p_I_to_C = np.random.uniform(p_I_to_C_avg - p_I_to_C_err, p_I_to_C_avg + p_I_to_C_err, num_reps).round(
+        3)  # overall probability of transition from Infected to Critical
+    p_C_to_D = np.random.uniform(p_C_to_D_avg - p_C_to_D_err, p_C_to_D_avg + p_C_to_D_err, num_reps).round(
+        3)  # overall probability of transition from Infected to Critical
+
+    gamma = 1.0 / T_infectious
+    delta = 1.0 / T_incubation
+    beta = R_0 / T_infectious
+    initial_date = 0
+
+    ############### Monte Carlo ###############
+    print('start Monte-Carlo')
+    df_results = pd.DataFrame({})  # initiate as an empty DataFrame so I can append to it in the Monte Carlo loop
+    df_I_vs_t = pd.DataFrame([])  # initiate as an empty DataFrame so I can append to it in the Monte Carlo loop
+    I_vs_t = []
+    df_C_vs_t = pd.DataFrame([])  # initiate as an empty DataFrame so I can append to it in the Monte Carlo loop
+    C_vs_t = []
+    df_D_vs_t = pd.DataFrame([])  # initiate as an empty DataFrame so I can append to it in the Monte Carlo loop
+    D_vs_t = []
+    df_IFR_vs_t = pd.DataFrame([])  # initiate as an empty DataFrame so I can append to it in the Monte Carlo loop
+    IFR_vs_t = []
+    for i in range(num_reps):
+        time, S, E, I, C, R, D, total_CFR, daily_CFR = Model(initial_cases, initial_date, population, p_immune[i],
+                                                             beta[i],
+                                                             gamma[i],
+                                                             delta[i], p_I_to_C[i], T_I_to_C[i], p_C_to_D[i],
+                                                             T_C_to_R[i],
+                                                             T_C_to_D[i])
+        df_temp = pd.DataFrame(index=[i], data={'R_0': R_0[i], 'immune %': p_immune[i] * 100,
+                                                'T_infectious': T_infectious[i], 'T_incubation': T_incubation[i],
+                                                'p_I_to_C%': p_I_to_C[i] * 100, 'p_C_to_D%': p_C_to_D[i] * 100,
+                                                'T_I_to_C': T_I_to_C[i], 'T_C_to_R': T_C_to_R[i],
+                                                'T_C_to_D': T_C_to_D[i],
+                                                'peak E': max(E), 'peak I': max(I), 'peak R': max(R),
+                                                'peak C': max(C), 'max D': max(D), 'total IFR': max(total_CFR)})
+        df_results = df_results.append(df_temp)
+        # plot progress to terminal, to avoid the feeling it got stuck...
+        if round(i / 25, 0) == (i / 25):
+            print('in MC round ', i, 'out of ', num_reps)
+
+        # thanks to
+        # https://stackoverflow.com/questions/31674557/how-to-append-rows-in-a-pandas-dataframe-in-a-for-loop for this method
+        IFR_vs_t.append(total_CFR)
+        I_vs_t.append(I)
+        D_vs_t.append(D)
+        C_vs_t.append(C)
+        df_IFR_vs_t = pd.DataFrame(IFR_vs_t)  # compartment value for each day is appended as new row
+        df_I_vs_t = pd.DataFrame(I_vs_t)  # compartment value for each day is appended as new row
+        df_C_vs_t = pd.DataFrame(C_vs_t)  # compartment value for each day is appended as new row
+        df_D_vs_t = pd.DataFrame(D_vs_t)  # compartment value for each day is appended as new row
     fig = px.line(df_I_vs_t[1:20].T,
                title="Number of Infected vs. time, per Monte Carlo run (1st 20)",
                width=600, height=400,
