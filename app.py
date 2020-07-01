@@ -169,106 +169,6 @@ print('min / max R')
 print(min(df_results['peak R']), max(df_results['peak R']))
 print(min(df_results['total IFR']), max(df_results['total IFR']))
 
-#############  try using dash  ###############
-
-
-#  plot using ploty express, with the intention to transfer it to DCC as explained in https://dash.plotly.com/dash-core-components/graph
-#  could not make it run with the regular dcc.Graph( ...  id='example-graph', ... figure={ ...  'data': [
-#  in that case it worked for a single line but I couldn't figure out how to pull all lines from the DataFrame. It kept failing to load the web page.
-
-# First handful or so runs of Monte Carlo graphs: Compartment content vs. time
-fig1 = px.line(df_I_vs_t[1:20].T,
-               title="Number of Infected vs. time, per Monte Carlo run (1st 20)",
-               width=600, height=400,
-               labels={  # replaces default labels by column name
-                   # ... thanks to https://plotly.com/python/styling-plotly-express/
-                   "index": "time [days]", "value": "Number of Infected"
-               },
-               )
-fig1.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
-
-fig2 = px.line(df_C_vs_t[1:20].T,
-               title="Number of Critical vs. time, per Monte Carlo run (1st 20)",
-               width=600, height=400,
-               labels={  # replaces default labels by column name
-                   # ... thanks to https://plotly.com/python/styling-plotly-express/
-                   "index": "time [days]", "value": "Number of Critical"
-               },
-               )
-fig2.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
-
-fig3 = px.line(df_D_vs_t[1:20].T,
-               title="Number of Dead vs. time, per Monte Carlo run (1st 20)",
-               width=600, height=400,
-               labels={  # replaces default labels by column name
-                   # ... thanks to https://plotly.com/python/styling-plotly-express/
-                   "index": "time [days]", "value": "Number of Dead"
-               },
-               )
-fig3.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
-# Histograms
-fig4 = px.histogram(df_results, x="total IFR",
-                    title="Histogram of IFR (Infected / Dead) over all Monte Carlo runs",
-                    width=600, height=400,
-                    )
-fig5 = px.histogram(df_results, x="peak C",
-                    title="Histogram of maximum number of Critical over all Monte Carlo runs",
-                    width=600, height=400,
-                    )
-fig6 = px.histogram(df_results, x="max D",
-                    title="Histogram of final Dead number over all Monte Carlo runs",
-                    width=600, height=400,
-                    )
-# Median graphs
-oneSigmaI = df_I_vs_t.T.apply(np.std, axis=1)
-medianI = df_I_vs_t.T.apply(np.median, axis=1)
-medianI_df = pd.DataFrame(data={'median': medianI, 'median+STD': medianI + oneSigmaI})
-fig7 = px.line(medianI_df,
-               title="Median of Infected vs. time, over all Monte Carlo run",
-               width=600, height=400,
-               labels={  # replaces default labels by column name
-                   # ... thanks to https://plotly.com/python/styling-plotly-express/
-                   "index": "time [days]", "value": "Median of Infected"
-               },
-               )
-
-oneSigmaC = df_C_vs_t.T.apply(np.std, axis=1)
-medianC = df_C_vs_t.T.apply(np.median, axis=1)
-medianRangeC_df = pd.DataFrame(data={'median': medianC, 'median+STD': medianC + oneSigmaC})
-fig8 = px.line(medianRangeC_df,
-               title="Median of Critical vs. time, over all Monte Carlo run",
-               width=600, height=400,
-               labels={  # replaces default labels by column name
-                   # ... thanks to https://plotly.com/python/styling-plotly-express/
-                   "index": "time [days]", "value": "Median of Critical"
-               },
-               )
-
-oneSigmaD = df_D_vs_t.T.apply(np.std, axis=1)
-medianD = df_D_vs_t.T.apply(np.median, axis=1)
-medianRangeD_df = pd.DataFrame(data={'median': medianD, 'median+STD': medianD + oneSigmaD})
-fig9 = px.line(medianRangeD_df,
-               title="Median of Dead vs. time, over all Monte Carlo run",
-               width=600, height=400,
-               labels={  # replaces default labels by column name
-                   # ... thanks to https://plotly.com/python/styling-plotly-express/
-                   "index": "time [days]", "value": "Median of Dead"
-               },
-               )
-
-oneSigmaIFR = df_IFR_vs_t.T.apply(np.std, axis=1)
-medianIFR = df_IFR_vs_t.T.apply(np.median, axis=1)
-medianRangeIFR_df = pd.DataFrame(
-    data={'median': medianIFR, 'median+STD': medianIFR + oneSigmaIFR, 'median-STD': medianIFR - oneSigmaIFR})
-fig10 = px.line(medianRangeIFR_df,
-                title="Median of IFR vs. time, over all Monte Carlo run",
-                width=600, height=400,
-                labels={  # replaces default labels by column name
-                    # ... thanks to https://plotly.com/python/styling-plotly-express/
-                    "index": "time [days]", "value": "Median of IFR"
-                },
-                )
-
 #################  Dash app and call backs  ############################
 external_stylesheets = ['https://codepen.io/chriddyp/pen/bWLwgP.css']
 
@@ -302,13 +202,16 @@ app.layout = html.Div([
     html.Br(),
     html.H5("Enter new parameters above, than press Submit button"),
     html.Button(id='submit-button-state', n_clicks=0, children='Submit'),
-    dcc.Graph(id='Infected-vs-time'),
+    dcc.Graph(id='fig1'), dcc.Graph(id='fig2'), dcc.Graph(id='fig3'), dcc.Graph(id='fig4'),
+    dcc.Graph(id='fig5'), dcc.Graph(id='fig6'),dcc.Graph(id='fig7'), dcc.Graph(id='fig8'),
+    dcc.Graph(id='fig9'), dcc.Graph(id='fig10'),
     html.Div(id='my-div'),
 ])
 
 
 @app.callback(
-    Output('Infected-vs-time', 'figure'),
+    [Output('fig1', 'figure'), Output('fig2', 'figure'),Output('fig3', 'figure'), Output('fig4', 'figure'), Output('fig5', 'figure'),
+    Output('fig6', 'figure'), Output('fig7', 'figure'),Output('fig8', 'figure'), Output('fig9', 'figure'), Output('fig10', 'figure'),],
     [Input('submit-button-state', 'n_clicks')],
     [State('num_reps', 'value'), State('population', 'value'), State('initial_cases', 'value'),
      State('p_immune_avg_p', 'value'), State('p_immune_err_p', 'value'),
@@ -394,7 +297,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
         df_I_vs_t = pd.DataFrame(I_vs_t)  # compartment value for each day is appended as new row
         df_C_vs_t = pd.DataFrame(C_vs_t)  # compartment value for each day is appended as new row
         df_D_vs_t = pd.DataFrame(D_vs_t)  # compartment value for each day is appended as new row
-    fig = px.line(df_I_vs_t[1:20].T,
+    fig1 = px.line(df_I_vs_t[1:20].T,
                title="Number of Infected vs. time, per Monte Carlo run (1st 20)",
                width=600, height=400,
                labels={  # replaces default labels by column name
@@ -402,10 +305,91 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
                    "index": "time [days]", "value": "Number of Infected"
                },
                )
-    fig.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
-    fig.update_layout()
+    fig1.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
+    fig1.update_layout()
 
-    return fig
+    fig2 = px.line(df_C_vs_t[1:20].T,
+                   title="Number of Critical vs. time, per Monte Carlo run (1st 20)",
+                   width=600, height=400,
+                   labels={  # replaces default labels by column name
+                       # ... thanks to https://plotly.com/python/styling-plotly-express/
+                       "index": "time [days]", "value": "Number of Critical"
+                   },
+                   )
+    fig2.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
+    fig3 = px.line(df_D_vs_t[1:20].T,
+                   title="Number of Dead vs. time, per Monte Carlo run (1st 20)",
+                   width=600, height=400,
+                   labels={  # replaces default labels by column name
+                       # ... thanks to https://plotly.com/python/styling-plotly-express/
+                       "index": "time [days]", "value": "Number of Dead"
+                   },
+                   )
+    fig3.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
+    # Histograms
+    fig4 = px.histogram(df_results, x="total IFR",
+                        title="Histogram of IFR (Infected / Dead) over all Monte Carlo runs",
+                        width=600, height=400,
+                        )
+    fig5 = px.histogram(df_results, x="peak C",
+                        title="Histogram of maximum number of Critical over all Monte Carlo runs",
+                        width=600, height=400,
+                        )
+    fig6 = px.histogram(df_results, x="max D",
+                        title="Histogram of final Dead number over all Monte Carlo runs",
+                        width=600, height=400,
+                        )
+    # Median graphs
+    oneSigmaI = df_I_vs_t.T.apply(np.std, axis=1)
+    medianI = df_I_vs_t.T.apply(np.median, axis=1)
+    medianI_df = pd.DataFrame(data={'median': medianI, 'median+STD': medianI + oneSigmaI})
+    fig7 = px.line(medianI_df,
+                   title="Median of Infected vs. time, over all Monte Carlo run",
+                   width=600, height=400,
+                   labels={  # replaces default labels by column name
+                       # ... thanks to https://plotly.com/python/styling-plotly-express/
+                       "index": "time [days]", "value": "Median of Infected"
+                   },
+                   )
+
+    oneSigmaC = df_C_vs_t.T.apply(np.std, axis=1)
+    medianC = df_C_vs_t.T.apply(np.median, axis=1)
+    medianRangeC_df = pd.DataFrame(data={'median': medianC, 'median+STD': medianC + oneSigmaC})
+    fig8 = px.line(medianRangeC_df,
+                   title="Median of Critical vs. time, over all Monte Carlo run",
+                   width=600, height=400,
+                   labels={  # replaces default labels by column name
+                       # ... thanks to https://plotly.com/python/styling-plotly-express/
+                       "index": "time [days]", "value": "Median of Critical"
+                   },
+                   )
+
+    oneSigmaD = df_D_vs_t.T.apply(np.std, axis=1)
+    medianD = df_D_vs_t.T.apply(np.median, axis=1)
+    medianRangeD_df = pd.DataFrame(data={'median': medianD, 'median+STD': medianD + oneSigmaD})
+    fig9 = px.line(medianRangeD_df,
+                   title="Median of Dead vs. time, over all Monte Carlo run",
+                   width=600, height=400,
+                   labels={  # replaces default labels by column name
+                       # ... thanks to https://plotly.com/python/styling-plotly-express/
+                       "index": "time [days]", "value": "Median of Dead"
+                   },
+                   )
+
+    oneSigmaIFR = df_IFR_vs_t.T.apply(np.std, axis=1)
+    medianIFR = df_IFR_vs_t.T.apply(np.median, axis=1)
+    medianRangeIFR_df = pd.DataFrame(
+        data={'median': medianIFR, 'median+STD': medianIFR + oneSigmaIFR, 'median-STD': medianIFR - oneSigmaIFR})
+    fig10 = px.line(medianRangeIFR_df,
+                    title="Median of IFR vs. time, over all Monte Carlo run",
+                    width=600, height=400,
+                    labels={  # replaces default labels by column name
+                        # ... thanks to https://plotly.com/python/styling-plotly-express/
+                        "index": "time [days]", "value": "Median of IFR"
+                    },
+                    )
+
+    return [fig1, fig2, fig3, fig4, fig5, fig6, fig7, fig8, fig9, fig10]
 
 
 if __name__ == '__main__':
