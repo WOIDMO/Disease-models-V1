@@ -297,7 +297,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
         df_I_vs_t = pd.DataFrame(I_vs_t)  # compartment value for each day is appended as new row
         df_C_vs_t = pd.DataFrame(C_vs_t)  # compartment value for each day is appended as new row
         df_D_vs_t = pd.DataFrame(D_vs_t)  # compartment value for each day is appended as new row
-    fig1 = px.line(df_I_vs_t[1:20].T,
+    I_vs_t = px.line(df_I_vs_t[1:20].T,
                title="Number of Infected vs. time, per Monte Carlo run (1st 20)",
                width=600, height=400,
                labels={  # replaces default labels by column name
@@ -305,10 +305,10 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
                    "index": "time [days]", "value": "Number of Infected"
                },
                )
-    fig1.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
-    fig1.update_layout()
+    I_vs_t.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
+    I_vs_t.update_layout()
 
-    fig2 = px.line(df_C_vs_t[1:20].T,
+    C_vs_t = px.line(df_C_vs_t[1:20].T,
                    title="Number of Critical vs. time, per Monte Carlo run (1st 20)",
                    width=600, height=400,
                    labels={  # replaces default labels by column name
@@ -316,8 +316,8 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
                        "index": "time [days]", "value": "Number of Critical"
                    },
                    )
-    fig2.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
-    fig3 = px.line(df_D_vs_t[1:20].T,
+    C_vs_t.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
+    D_vs_t = px.line(df_D_vs_t[1:20].T,
                    title="Number of Dead vs. time, per Monte Carlo run (1st 20)",
                    width=600, height=400,
                    labels={  # replaces default labels by column name
@@ -325,17 +325,17 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
                        "index": "time [days]", "value": "Number of Dead"
                    },
                    )
-    fig3.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
+    D_vs_t.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
     # Histograms
-    fig4 = px.histogram(df_results, x="total IFR",
+    histIFR = px.histogram(df_results, x="total IFR",
                         title="Histogram of IFR (Infected / Dead) over all Monte Carlo runs",
                         width=600, height=400,
                         )
-    fig5 = px.histogram(df_results, x="peak C",
+    histC = px.histogram(df_results, x="peak C",
                         title="Histogram of maximum number of Critical over all Monte Carlo runs",
                         width=600, height=400,
                         )
-    fig6 = px.histogram(df_results, x="max D",
+    histD = px.histogram(df_results, x="max D",
                         title="Histogram of final Dead number over all Monte Carlo runs",
                         width=600, height=400,
                         )
@@ -343,7 +343,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
     oneSigmaI = df_I_vs_t.T.apply(np.std, axis=1)
     medianI = df_I_vs_t.T.apply(np.median, axis=1)
     medianI_df = pd.DataFrame(data={'median': medianI, 'median+STD': medianI + oneSigmaI})
-    fig7 = px.line(medianI_df,
+    medI = px.line(medianI_df,
                    title="Median of Infected vs. time, over all Monte Carlo run",
                    width=600, height=400,
                    labels={  # replaces default labels by column name
@@ -355,7 +355,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
     oneSigmaC = df_C_vs_t.T.apply(np.std, axis=1)
     medianC = df_C_vs_t.T.apply(np.median, axis=1)
     medianRangeC_df = pd.DataFrame(data={'median': medianC, 'median+STD': medianC + oneSigmaC})
-    fig8 = px.line(medianRangeC_df,
+    medC = px.line(medianRangeC_df,
                    title="Median of Critical vs. time, over all Monte Carlo run",
                    width=600, height=400,
                    labels={  # replaces default labels by column name
@@ -367,7 +367,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
     oneSigmaD = df_D_vs_t.T.apply(np.std, axis=1)
     medianD = df_D_vs_t.T.apply(np.median, axis=1)
     medianRangeD_df = pd.DataFrame(data={'median': medianD, 'median+STD': medianD + oneSigmaD})
-    fig9 = px.line(medianRangeD_df,
+    medD = px.line(medianRangeD_df,
                    title="Median of Dead vs. time, over all Monte Carlo run",
                    width=600, height=400,
                    labels={  # replaces default labels by column name
@@ -380,7 +380,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
     medianIFR = df_IFR_vs_t.T.apply(np.median, axis=1)
     medianRangeIFR_df = pd.DataFrame(
         data={'median': medianIFR, 'median+STD': medianIFR + oneSigmaIFR, 'median-STD': medianIFR - oneSigmaIFR})
-    fig10 = px.line(medianRangeIFR_df,
+    medIFR = px.line(medianRangeIFR_df,
                     title="Median of IFR vs. time, over all Monte Carlo run",
                     width=600, height=400,
                     labels={  # replaces default labels by column name
@@ -389,7 +389,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
                     },
                     )
 
-    return [fig1, fig2, fig3, fig4, fig5, fig6, fig7, fig8, fig9, fig10]
+    return [C_vs_t, histC, medC, D_vs_t, histD, medD, I_vs_t, medI, histIFR, medIFR]
 
 
 if __name__ == '__main__':
