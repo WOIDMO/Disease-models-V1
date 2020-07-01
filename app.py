@@ -280,15 +280,26 @@ app.layout = html.Div([
     dcc.Input(id='num_reps', value=num_reps, type='number'),
     html.I("Population size: "), dcc.Input(id='population', value=population, type='number'),
     html.I("Number of originally infected: "), dcc.Input(id='initial_cases', value=initial_cases, type='number'), html.Br(),
-    html.I("% immuned: "), dcc.Input(id='p_immune_avg_p', value=p_immune_avg*100, type='number'),
-    html.I(" +/- "), dcc.Input(id='p_immune_err_p', value=p_immune_err*100, type='number'),
-    html.I(" [%]     "),
+    html.I("Precent immuned: "), dcc.Input(id='p_immune_avg_p', value=p_immune_avg*100, type='number'),
+    html.I(" +/- "), dcc.Input(id='p_immune_err_p', value=p_immune_err*100, type='number'), html.I(" [%]; "),
     html.I("R0: "), dcc.Input(id='R_0_avg', value=R_0_avg, type='number'),
     html.I(" +/- "), dcc.Input(id='R_0_err', value=R_0_err, type='number'), html.Br(),
     html.I("Incubation time: "), dcc.Input(id='T_incubation_avg', value=T_incubation_avg, type='number'),
-    html.I(" +/- "), dcc.Input(id='T_incubation_err', value=T_incubation_err, type='number'), html.I(" [days]     "),
+    html.I(" +/- "), dcc.Input(id='T_incubation_err', value=T_incubation_err, type='number'), html.I(" [days]; "),
     html.I(" Infectious time: "), dcc.Input(id='T_infectious_avg', value=T_infectious_avg, type='number'),
-    html.I(" +/- "), dcc.Input(id='T_infectious_err', value=T_infectious_err, type='number'), html.I(" [days]   "), html.Br(),
+    html.I(" +/- "), dcc.Input(id='T_infectious_err', value=T_infectious_err, type='number'), html.I(" [days]"), html.Br(),
+    html.I("Probability to need ICU when infected: "), dcc.Input(id='p_I_to_C_avg_p', value=p_I_to_C_avg * 100, type='number'),
+    html.I(" +/- "), dcc.Input(id='p_I_to_C_err_p', value=p_I_to_C_err * 100, type='number'), html.I(" [%]; "),
+    html.I("Probability to die in ICU: "), dcc.Input(id='p_C_to_D_avg_p', value=p_C_to_D_avg * 100, type='number'),
+    html.I(" +/- "), dcc.Input(id='p_C_to_D_err_p', value=p_C_to_D_err * 100, type='number'), html.I(" [%]     "), html.Br(),
+    html.I("Time to need ICU when infected: "), dcc.Input(id='T_I_to_C_avg', value=T_I_to_C_avg, type='number'),
+    html.I(" +/- "), dcc.Input(id='T_I_to_C_err', value=T_I_to_C_err, type='number'), html.I(" [days]; "),
+    html.I(" Time to die in ICU: "), dcc.Input(id='T_C_to_D_avg', value=T_C_to_D_avg, type='number'),
+    html.I(" +/- "), dcc.Input(id='T_C_to_D_err', value=T_C_to_D_err, type='number'), html.I(" [days]   "),
+    html.Br(),
+    html.I(" Time to recover in ICU: "), dcc.Input(id='T_C_to_R_avg', value=T_C_to_R_avg, type='number'),
+    html.I(" +/- "), dcc.Input(id='T_C_to_R_err', value=T_C_to_R_err, type='number'), html.I(" [days]   "),
+    html.Br(),
     html.H5("Enter new parameters above, than press Submit button"),
     html.Button(id='submit-button-state', n_clicks=0, children='Submit'),
     dcc.Graph(id='Infected-vs-time'),
@@ -303,14 +314,21 @@ app.layout = html.Div([
      State('p_immune_avg_p', 'value'), State('p_immune_err_p', 'value'),
      State('R_0_avg', 'value'), State('R_0_err', 'value'),
      State('T_incubation_avg', 'value'), State('T_incubation_err', 'value'),
-     State('T_infectious_avg', 'value'), State('T_infectious_err', 'value'),],)
+     State('T_infectious_avg', 'value'), State('T_infectious_err', 'value'),
+     State('p_I_to_C_avg_p', 'value'), State('p_I_to_C_err_p', 'value'),
+     State('p_C_to_D_avg_p', 'value'), State('p_C_to_D_err_p', 'value'),
+     State('T_I_to_C_avg', 'value'), State('T_I_to_C_err', 'value'),
+     State('T_C_to_D_avg', 'value'), State('T_C_to_D_err', 'value'),
+     State('T_C_to_R_avg', 'value'), State('T_C_to_R_err', 'value'),
+     ],)
 
 def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, p_immune_err_p, R_0_avg, R_0_err,
-                  T_incubation_avg, T_incubation_err,
-                  T_infectious_avg, T_infectious_err,
-                  ):
-    p_immune_avg = p_immune_avg_p /100
-    p_immune_err = p_immune_err_p /100
+                T_incubation_avg, T_incubation_err, T_infectious_avg, T_infectious_err,
+                p_I_to_C_avg_p, p_I_to_C_err_p, p_C_to_D_avg_p, p_C_to_D_err_p,
+                  T_I_to_C_avg, T_I_to_C_err, T_C_to_D_avg, T_C_to_D_err, T_C_to_R_avg, T_C_to_R_err ):
+    p_immune_avg, p_immune_err = p_immune_avg_p /100 , p_immune_err_p /100
+    p_I_to_C_avg, p_I_to_C_err = p_I_to_C_avg_p /100, p_I_to_C_err_p /100
+    p_C_to_D_avg, p_C_to_D_err = p_C_to_D_avg_p /100, p_C_to_D_err_p /100
 
     #  in callback Now roll the dice num_reps times for each parameter:
     p_immune = np.random.uniform(p_immune_avg - p_immune_err, p_immune_avg + p_immune_err, num_reps).round(
