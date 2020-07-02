@@ -248,16 +248,6 @@ controls = dbc.Card(
         ),
         dbc.FormGroup(
             [
-                dbc.Label("Initial exposed Cases"),
-                dbc.Input(
-                    id="initial_cases", type="number", placeholder="initial_cases",
-                    min=1, max=1_000_000, step=1, value=initial_cases,
-                )
-            ]
-        ),
-
-        dbc.FormGroup(
-            [
                 dbc.Label("population"),
                 dbc.Input(
                     id="population", type="number", placeholder="population",
@@ -265,7 +255,15 @@ controls = dbc.Card(
                 )
             ]
         ),
-
+        dbc.FormGroup(
+            [
+                dbc.Label("Initial exposed Cases"),
+                dbc.Input(
+                    id="initial_cases", type="number", placeholder="initial_cases",
+                    min=1, max=1_000_000, step=1, value=initial_cases,
+                )
+            ]
+        ),
         dbc.FormGroup(
             [
                 dbc.Label("average percent of population immuned"),
@@ -516,12 +514,12 @@ app.layout = dbc.Container(
      ],
     [dash.dependencies.Input('submit-button-state', 'n_clicks')],
     [dash.dependencies.State('num_reps', 'value'),
-     dash.dependencies.State('initial_cases', 'value'),
      dash.dependencies.State('population', 'value'),
-     dash.dependencies.State('R_0_avg', 'value'),
-     dash.dependencies.State('R_0_err', 'value'),
+     dash.dependencies.State('initial_cases', 'value'),
      dash.dependencies.State('p_immune_avg', 'value'),
      dash.dependencies.State('p_immune_err', 'value'),
+     dash.dependencies.State('R_0_avg', 'value'),
+     dash.dependencies.State('R_0_err', 'value'),
      dash.dependencies.State('p_I_to_C_avg', 'value'),
      dash.dependencies.State('p_I_to_C_err', 'value'),
      dash.dependencies.State('p_C_to_D_avg', 'value'),
@@ -541,7 +539,12 @@ app.layout = dbc.Container(
 def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, p_immune_err_p, R_0_avg, R_0_err,
                 T_incubation_avg, T_incubation_err, T_infectious_avg, T_infectious_err,
                 p_I_to_C_avg_p, p_I_to_C_err_p, p_C_to_D_avg_p, p_C_to_D_err_p,
-                  T_I_to_C_avg, T_I_to_C_err, T_C_to_D_avg, T_C_to_D_err, T_C_to_R_avg, T_C_to_R_err ):
+                  T_I_to_C_avg, T_I_to_C_err, T_C_to_D_avg, T_C_to_D_err, T_C_to_R_avg, T_C_to_R_err):
+    print('in callback:')
+    print(num_reps, population, initial_cases, p_immune_avg_p, p_immune_err_p, R_0_avg, R_0_err,
+                T_incubation_avg, T_incubation_err, T_infectious_avg, T_infectious_err,
+                p_I_to_C_avg_p, p_I_to_C_err_p, p_C_to_D_avg_p, p_C_to_D_err_p,
+                  T_I_to_C_avg, T_I_to_C_err, T_C_to_D_avg, T_C_to_D_err, T_C_to_R_avg, T_C_to_R_err)
     p_immune_avg, p_immune_err = p_immune_avg_p /100 , p_immune_err_p /100
     p_I_to_C_avg, p_I_to_C_err = p_I_to_C_avg_p /100, p_I_to_C_err_p /100
     p_C_to_D_avg, p_C_to_D_err = p_C_to_D_avg_p /100, p_C_to_D_err_p /100
