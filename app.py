@@ -1,16 +1,12 @@
-import dash_table
 import numpy as np
 import pandas as pd
-
 pd.options.mode.chained_assignment = None  # default='warn'
 from scipy.integrate import odeint
-import matplotlib.pyplot as plt
 import plotly.express as px
 import dash
 import dash_core_components as dcc
 import dash_html_components as html
 import dash_bootstrap_components as dbc
-from dash.dependencies import Input, Output, State
 
 ############################################ the model ################################################
 def deriv(y, t, N, p_immune, beta, gamma, delta, p_I_to_C, T_I_to_C, p_C_to_D, T_C_to_R, T_C_to_D):
@@ -22,7 +18,6 @@ def deriv(y, t, N, p_immune, beta, gamma, delta, p_I_to_C, T_I_to_C, p_C_to_D, T
     dRdt = gamma * (1 - p_I_to_C) * I + (1 - p_C_to_D) * 1 / T_C_to_R * C
     dDdt = 1 / T_C_to_D * p_C_to_D * C
     return dSdt, dEdt, dIdt, dCdt, dRdt, dDdt
-
 
 def Model(initial_cases, initial_date, N, p_immune, beta, gamma, delta, p_I_to_C, T_I_to_C, p_C_to_D, T_C_to_R,
           T_C_to_D):
@@ -40,9 +35,7 @@ def Model(initial_cases, initial_date, N, p_immune, beta, gamma, delta, p_I_to_C
         (R[i] - R[i - 1]), (D[i] - D[i - 1])) > 10 else 0 for i in range(1, len(t))]
     return t, S, E, I, C, R, D, total_CFR, daily_CFR
 
-
 ############### initialization ###############
-
 
 population = 100000  # size of initial population
 initial_cases = 10  # initial number of Exposed. I chose 10 to stay away from the critical community size at the onset of the epidemic.
@@ -51,23 +44,23 @@ num_reps = 10  # for Monte Carlo; num_reps = 1000 is a good number but takes a l
 # num_reps = 200 is good for the Median graphs,
 # and also gives a good sense on how the histogram will look like.
 
-disease = 'Covid_19'  # supported options: 'Covid_19', 'Influenza_seasonal', or 'deterministic_test'
+disease = 'Covid_19'  # starting point: supported options: 'Covid_19', 'Influenza_seasonal', or 'deterministic_test'
 print(disease)
 
 # The section below is intended to be modular, so we can easily add other disease model.
 if disease == 'Covid_19':
-    R_0_avg, R_0_err = 3.82, 2.08
-    p_immune_avg, p_immune_err = 5 / 100, 1 / 100
+    p_immune_avg, p_immune_err = 6 / 100, 1 / 100
+    R_0_avg, R_0_err = 3.82, 1.88
     T_infectious_avg, T_infectious_err = 10, 2
     T_incubation_avg, T_incubation_err = 5.5, 2.5
-    p_I_to_C_avg, p_I_to_C_err = 5 / 100, 3 / 100
+    p_I_to_C_avg, p_I_to_C_err = 5.5 / 100, 2.5 / 100
     p_C_to_D_avg, p_C_to_D_err = 32.5 / 100, 7.5 / 100
     T_I_to_C_avg, T_I_to_C_err = 8.5, 4
     T_C_to_D_avg, T_C_to_D_err = 7, 2
     T_C_to_R_avg, T_C_to_R_err = 14, 2
 elif disease == 'Influenza_seasonal':
-    R_0_avg, R_0_err = 1.5, 0.6
     p_immune_avg, p_immune_err = 20 / 100, 5 / 100
+    R_0_avg, R_0_err = 1.5, 0.6
     T_infectious_avg, T_infectious_err = 6.5, 3.5
     T_incubation_avg, T_incubation_err = 2.5, 1.5
     p_I_to_C_avg, p_I_to_C_err = 0.5 / 100, 0.25 / 100
@@ -76,8 +69,8 @@ elif disease == 'Influenza_seasonal':
     T_C_to_D_avg, T_C_to_D_err = 7, 2
     T_C_to_R_avg, T_C_to_R_err = 14, 2
 elif disease == 'deterministic_test':
-    R_0_avg, R_0_err = 3.0, 0
     p_immune_avg, p_immune_err = 0, 0
+    R_0_avg, R_0_err = 3.0, 0
     T_infectious_avg, T_infectious_err = 9, 0
     T_incubation_avg, T_incubation_err = 3, 0
     p_I_to_C_avg, p_I_to_C_err = 5 / 100, 0
@@ -194,42 +187,6 @@ controls = dbc.Card(
         ),
         dbc.FormGroup(
             [
-                dbc.Label("Probability: infected need ICU [%]"),
-                dbc.Input(
-                    id="p_I_to_C_avg", type="number", placeholder="p_I_to_C_avg_p",
-                    min=0, max=100, step=0.1, value=p_I_to_C_avg*100,
-                )
-            ]
-        ),
-        dbc.FormGroup(
-            [
-                dbc.Label("+/- probability: infected need ICU [%]"),
-                dbc.Input(
-                    id="p_I_to_C_err", type="number", placeholder="p_I_to_C_err_p",
-                    min=0, max=100, step=0.1, value=p_I_to_C_err*100,
-                )
-            ]
-        ),
-        dbc.FormGroup(
-            [
-                dbc.Label("Probability: Dying in ICU [%]"),
-                dbc.Input(
-                    id="p_C_to_D_avg", type="number", placeholder="p_C_to_D_avg_p",
-                    min=0, max=100, step=0.1, value=p_C_to_D_avg*100,
-                )
-            ]
-        ),
-        dbc.FormGroup(
-            [
-                dbc.Label("+/- probability: Dying in ICU [%]"),
-                dbc.Input(
-                    id="p_C_to_D_err", type="number", placeholder="p_C_to_D_err_p",
-                    min=0, max=100, step=0.1, value=p_C_to_D_err*100,
-                )
-            ]
-        ),
-        dbc.FormGroup(
-            [
                 dbc.Label("Incubation time [days]"),
                 dbc.Input(
                     id="T_incubation_avg", type="number", placeholder="T_incubation_avg",
@@ -264,6 +221,43 @@ controls = dbc.Card(
                 )
             ]
         ),
+        dbc.FormGroup(
+            [
+                dbc.Label("Probability: infected need ICU [%]"),
+                dbc.Input(
+                    id="p_I_to_C_avg", type="number", placeholder="p_I_to_C_avg_p",
+                    min=0, max=100, step=0.1, value=p_I_to_C_avg*100,
+                )
+            ]
+        ),
+        dbc.FormGroup(
+            [
+                dbc.Label("+/- probability: infected need ICU [%]"),
+                dbc.Input(
+                    id="p_I_to_C_err", type="number", placeholder="p_I_to_C_err_p",
+                    min=0, max=100, step=0.05, value=p_I_to_C_err*100,
+                )
+            ]
+        ),
+        dbc.FormGroup(
+            [
+                dbc.Label("Probability: Dying in ICU [%]"),
+                dbc.Input(
+                    id="p_C_to_D_avg", type="number", placeholder="p_C_to_D_avg_p",
+                    min=0, max=100, step=0.1, value=p_C_to_D_avg*100,
+                )
+            ]
+        ),
+        dbc.FormGroup(
+            [
+                dbc.Label("+/- probability: Dying in ICU [%]"),
+                dbc.Input(
+                    id="p_C_to_D_err", type="number", placeholder="p_C_to_D_err_p",
+                    min=0, max=100, step=0.1, value=p_C_to_D_err*100,
+                )
+            ]
+        ),
+
         dbc.FormGroup(
             [
                 dbc.Label("Time: infectious to ICU [days]"),
@@ -337,10 +331,13 @@ app.layout = dbc.Container(
                         ),
                         html.Hr(className="my-2"),
                         dcc.Markdown('''
-                             This model is intended to give a feeling how bad an epidemic can get if we "do nothing", meaning R0 stays constant with time.
-                             Many parameters have a range of uncertainty, therefore every parameter have an average value and a +/- range, and the Monte Carlo chooses in uniform distribution aa value in this range.
+                             This model is intended to give a feeling how bad an epidemic can get if we "do nothing", 
+                             meaning R0 stays constant with time.
+                             Many parameters have a range of uncertainty, therefore every parameter have an average value and a +/- range, 
+                             and the Monte Carlo chooses a value in this range, 
+                             uniformly distributed over the range.
                              This models the basic compartments of Susceptible, Exposed, Infected, Critical, Dead and Recovered. 
-                             Only the non-immuned population can get expossed. Infected can either become Critical (needing ICU) or Recovered. 
+                             Only the non-immuned population can get exposed. Infected can either become Critical (needing ICU) or Recovered. 
                              Critical can become Dead or Recovered.    
                              Note: Looping over many Monte Carlo rounds improves the noise but takes longer. 200 rounds 
                              were good for the median graphs, 1000 were needed for good histograms.  
@@ -420,14 +417,14 @@ app.layout = dbc.Container(
      dash.dependencies.State('p_immune_err', 'value'),
      dash.dependencies.State('R_0_avg', 'value'),
      dash.dependencies.State('R_0_err', 'value'),
-     dash.dependencies.State('p_I_to_C_avg', 'value'),
-     dash.dependencies.State('p_I_to_C_err', 'value'),
-     dash.dependencies.State('p_C_to_D_avg', 'value'),
-     dash.dependencies.State('p_C_to_D_err', 'value'),
      dash.dependencies.State('T_incubation_avg', 'value'),
      dash.dependencies.State('T_incubation_err', 'value'),
      dash.dependencies.State('T_infectious_avg', 'value'),
      dash.dependencies.State('T_infectious_err', 'value'),
+     dash.dependencies.State('p_I_to_C_avg', 'value'),
+     dash.dependencies.State('p_I_to_C_err', 'value'),
+     dash.dependencies.State('p_C_to_D_avg', 'value'),
+     dash.dependencies.State('p_C_to_D_err', 'value'),
      dash.dependencies.State('T_I_to_C_avg', 'value'),
      dash.dependencies.State('T_I_to_C_err', 'value'),
      dash.dependencies.State('T_C_to_D_avg', 'value'),
@@ -441,10 +438,14 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
                 p_I_to_C_avg_p, p_I_to_C_err_p, p_C_to_D_avg_p, p_C_to_D_err_p,
                   T_I_to_C_avg, T_I_to_C_err, T_C_to_D_avg, T_C_to_D_err, T_C_to_R_avg, T_C_to_R_err):
     print('in callback:')
-    print(num_reps, population, initial_cases, p_immune_avg_p, p_immune_err_p, R_0_avg, R_0_err,
-                T_incubation_avg, T_incubation_err, T_infectious_avg, T_infectious_err,
-                p_I_to_C_avg_p, p_I_to_C_err_p, p_C_to_D_avg_p, p_C_to_D_err_p,
-                  T_I_to_C_avg, T_I_to_C_err, T_C_to_D_avg, T_C_to_D_err, T_C_to_R_avg, T_C_to_R_err)
+    print('num_reps, population, initial_cases, p_immune_avg_p, p_immune_err_p')
+    print(num_reps, population, initial_cases, p_immune_avg_p, p_immune_err_p)
+    print('R_0_avg, R_0_err, T_incubation_avg, T_incubation_err, T_infectious_avg, T_infectious_err')
+    print(R_0_avg, R_0_err, T_incubation_avg, T_incubation_err, T_infectious_avg, T_infectious_err)
+    print('p_I_to_C_avg_p, p_I_to_C_err_p, p_C_to_D_avg_p, p_C_to_D_err_p')
+    print(p_I_to_C_avg_p, p_I_to_C_err_p, p_C_to_D_avg_p, p_C_to_D_err_p)
+    print('T_I_to_C_avg, T_I_to_C_err, T_C_to_D_avg, T_C_to_D_err, T_C_to_R_avg, T_C_to_R_err')
+    print(T_I_to_C_avg, T_I_to_C_err, T_C_to_D_avg, T_C_to_D_err, T_C_to_R_avg, T_C_to_R_err)
     p_immune_avg, p_immune_err = p_immune_avg_p /100 , p_immune_err_p /100
     p_I_to_C_avg, p_I_to_C_err = p_I_to_C_avg_p /100, p_I_to_C_err_p /100
     p_C_to_D_avg, p_C_to_D_err = p_C_to_D_avg_p /100, p_C_to_D_err_p /100
@@ -521,11 +522,11 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
     I_vs_t.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
     I_vs_t.update_layout()
     IFR_vs_t = px.line(df_IFR_vs_t[1:20].T,
-               title="IFR (Infected/Dead) [%] vs. time, per Monte Carlo run <br>(maximum 20 runs are shown)",
+               title="IFR (Infected / Dead) vs. time, per Monte Carlo run <br>(maximum 20 runs are shown)",
                width=600, height=400,
                labels={  # replaces default labels by column name
                    # ... thanks to https://plotly.com/python/styling-plotly-express/
-                   "index": "time [days]", "value": "Number of Infected"
+                   "index": "time [days]", "value": "IFR [%]"
                },
                )
     IFR_vs_t.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
@@ -605,7 +606,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
     medianRangeIFR_df = pd.DataFrame(
         data={'median': medianIFR, 'median+STD': medianIFR + oneSigmaIFR, 'median-STD': medianIFR - oneSigmaIFR})
     medIFR = px.line(medianRangeIFR_df,
-                    title="Median of IFR (Infected / Dead) [%] vs. time,<br>over all Monte Carlo runs",
+                    title="Median of IFR (Infected / Dead) vs. time,<br>over all Monte Carlo runs",
                     width=600, height=400,
                     labels={  # replaces default labels by column name
                         # ... thanks to https://plotly.com/python/styling-plotly-express/
@@ -622,17 +623,12 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
         print(df_results)
     else:
         print('NOT printing df_results to Terminal, as it is deemed too long')
-    print('min / max I')
-    print(min(df_results['peak I']), max(df_results['peak I']))
-    print('min / max C')
-    print(min(df_results['peak C']), max(df_results['peak C']))
-    print('min / max D')
-    print(min(df_results['max D']), max(df_results['max D']))
-    print('min / max R')
-    print(min(df_results['peak R']), max(df_results['peak R']))
+    print('min / max I                  min / max C')
+    print(min(df_results['peak I']), max(df_results['peak I']), min(df_results['peak C']), max(df_results['peak C']))
+    print('min / max D                 min / max R')
+    print(min(df_results['max D']), max(df_results['max D']), min(df_results['peak R']), max(df_results['peak R']))
     print('min / max IFR')
     print(min(df_results['total IFR']), max(df_results['total IFR']))
-    # return [C_vs_t, histC, medC, D_vs_t]
     return [IFR_vs_t, C_vs_t, D_vs_t, histIFR, histC, histD, medIFR, medC, medD]
 
 
