@@ -44,7 +44,7 @@ num_reps = 10  # for Monte Carlo; num_reps = 1000 is a good number but takes a l
 # num_reps = 200 is good for the Median graphs,
 # and also gives a good sense on how the histogram will look like.
 
-disease = 'Influenza_seasonal'  # starting point: supported options: 'Covid_19', 'Influenza_seasonal', or 'deterministic_test'
+disease = 'Covid_19'  # starting point: supported options: 'Covid_19', 'Influenza_seasonal', or 'deterministic_test'
 print(disease)
 
 # The section below is intended to be modular, so we can easily add other disease model.
