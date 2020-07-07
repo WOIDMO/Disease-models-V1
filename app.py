@@ -109,6 +109,7 @@ initial_date = 0
 external_stylesheets = [dbc.themes.BOOTSTRAP]
 
 app = dash.Dash(__name__, external_stylesheets=external_stylesheets)
+server = app.server
 app.title = "MonteCarlo"
 
 # these are the controls where the parameters can be tuned.
