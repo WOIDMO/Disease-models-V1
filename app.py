@@ -326,25 +326,25 @@ app.layout = dbc.Container(
             [
                 dbc.Container(
                     [
-                        html.H1("SEIR Monte Carlo model", className="display-3"),
-                        html.P(
-                            "Interactively change by pressing the blue 'apply' button. ",
-                            className="lead",
-                        ),
-                        html.Hr(className="my-2"),
-                        dcc.Markdown('''
-                             This model is intended to give a feeling how bad an epidemic can get if we "do nothing", 
-                             meaning R0 stays constant with time.
-                             Many parameters have a range of uncertainty, therefore every parameter have an average value and a +/- range, 
-                             and the Monte Carlo chooses a value in this range, 
-                             uniformly distributed over the range.
-                             This models the basic compartments of Susceptible, Exposed, Infected, Critical, Dead and Recovered. 
-                             Only the non-immuned population can get exposed. Infected can either become Critical (needing ICU) or Recovered. 
-                             Critical can become Dead or Recovered.    
-                             Note: Looping over many Monte Carlo rounds improves the noise but takes longer. 200 rounds 
-                             were good for the median graphs, 1000 were needed for good histograms.  
-                            '''
-                                     )
+                        # html.H1("SEIR Monte Carlo model", className="display-3"),
+                        # html.P(
+                        #     "Interactively change by pressing the blue 'apply' button. ",
+                        #     className="lead",
+                        # ),
+                        # html.Hr(className="my-2"),
+                        # dcc.Markdown('''
+                        #      This model is intended to give a feeling how bad an epidemic can get if we "do nothing",
+                        #      meaning R0 stays constant with time.
+                        #      Many parameters have a range of uncertainty, therefore every parameter have an average value and a +/- range,
+                        #      and the Monte Carlo chooses a value in this range,
+                        #      uniformly distributed over the range.
+                        #      This models the basic compartments of Susceptible, Exposed, Infected, Critical, Dead and Recovered.
+                        #      Only the non-immuned population can get exposed. Infected can either become Critical (needing ICU) or Recovered.
+                        #      Critical can become Dead or Recovered.
+                        #      Note: Looping over many Monte Carlo rounds improves the noise but takes longer. 200 rounds
+                        #      were good for the median graphs, 1000 were needed for good histograms.
+                        #     '''
+                        #              )
                     ],
                     fluid=True,
                 )
