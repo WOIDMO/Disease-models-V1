@@ -123,6 +123,7 @@ controls = dbc.Card(
     [
         dbc.Button("Apply", id="submit-button-state",
                    color="primary", block=True),
+        # dbc.Progress(id="progress", value=50, striped=True, animated=True),
         dbc.Label("Parameters:"),
         dbc.FormGroup(
             [
@@ -553,15 +554,15 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
     D_vs_t.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
     # Histograms
     histIFR = px.histogram(df_results, x="total IFR",
-                        title="Histogram of IFR (Infected / Dead) [%] <br>over all Monte Carlo runs",
+                        title="Histogram of IFR (Infected / Dead) [%] <br>over " + str(num_reps) + " Monte Carlo runs",
                         # width=600, height=400,
                            )
     histC = px.histogram(df_results, x="peak C",
-                        title="Histogram of peak number of Critically sick <br>over all Monte Carlo runs",
+                        title="Histogram of peak number of Critically sick <br>over " + str(num_reps) + " Monte Carlo runs",
                         # width=600, height=400,
                          )
     histD = px.histogram(df_results, x="max D",
-                        title="Histogram of final number of Dead <br>over all Monte Carlo runs",
+                        title="Histogram of final number of Dead <br>over " + str(num_reps) + " Monte Carlo runs",
                         # width=600, height=400,
                          )
     # Median graphs
@@ -569,7 +570,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
     medianI = df_I_vs_t.T.apply(np.median, axis=1)
     medianI_df = pd.DataFrame(data={'median': medianI, 'median+STD': medianI + oneSigmaI})
     medI = px.line(medianI_df,
-                   title="Median of Infected vs. time, over all Monte Carlo runs",
+                   title="Median of Infected vs. time, over " + str(num_reps) + " Monte Carlo runs",
                    # width=600, height=400,
                    labels={  # replaces default labels by column name
                        # ... thanks to https://plotly.com/python/styling-plotly-express/
@@ -582,7 +583,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
     medianC = df_C_vs_t.T.apply(np.median, axis=1)
     medianRangeC_df = pd.DataFrame(data={'median': medianC, 'median+STD': medianC + oneSigmaC})
     medC = px.line(medianRangeC_df,
-                   title="Median of number of Critically sick vs. time,<br>over all Monte Carlo runs",
+                   title="Median of number of Critically sick vs. time,<br>over " + str(num_reps) + " Monte Carlo runs",
                    # width=600, height=400,
                    labels={  # replaces default labels by column name
                        # ... thanks to https://plotly.com/python/styling-plotly-express/
@@ -596,7 +597,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
     medianD = df_D_vs_t.T.apply(np.median, axis=1)
     medianRangeD_df = pd.DataFrame(data={'median': medianD, 'median+STD': medianD + oneSigmaD})
     medD = px.line(medianRangeD_df,
-                   title="Median of number of Dead vs. time, <br>over all Monte Carlo runs",
+                   title="Median of number of Dead vs. time, <br>over " + str(num_reps) + " Monte Carlo runs",
                    # width=600, height=400,
                    labels={  # replaces default labels by column name
                        # ... thanks to https://plotly.com/python/styling-plotly-express/
@@ -610,7 +611,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
     medianRangeIFR_df = pd.DataFrame(
         data={'median': medianIFR, 'median+STD': medianIFR + oneSigmaIFR, 'median-STD': medianIFR - oneSigmaIFR})
     medIFR = px.line(medianRangeIFR_df,
-                    title="Median of IFR (Infected / Dead) vs. time,<br>over all Monte Carlo runs",
+                    title="Median of IFR (Infected / Dead) vs. time,<br>over " + str(num_reps) + " Monte Carlo runs",
                     # width=600, height=400,
                     labels={  # replaces default labels by column name
                         # ... thanks to https://plotly.com/python/styling-plotly-express/
