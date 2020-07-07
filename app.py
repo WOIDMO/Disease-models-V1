@@ -123,7 +123,7 @@ controls = dbc.Card(
     [
         dbc.Button("Apply", id="submit-button-state",
                    color="primary", block=True),
-
+        dbc.Label("Parameters:"),
         dbc.FormGroup(
             [
                 dbc.Label("Number of Monte Carlo loops"),
@@ -317,84 +317,83 @@ controls = dbc.Card(
     ],
     body=True,
 )
+noGuttersState = True  # use one variable assignment to control all gutters together
 
 # layout for the whole page
 app.layout = dbc.Container(
     [
         # first, a jumbotron for the description and title
-        dbc.Jumbotron(
-            [
-                dbc.Container(
-                    [
-                        # html.H1("SEIR Monte Carlo model", className="display-3"),
-                        # html.P(
-                        #     "Interactively change by pressing the blue 'apply' button. ",
-                        #     className="lead",
-                        # ),
-                        # html.Hr(className="my-2"),
-                        # dcc.Markdown('''
-                        #      This model is intended to give a feeling how bad an epidemic can get if we "do nothing",
-                        #      meaning R0 stays constant with time.
-                        #      Many parameters have a range of uncertainty, therefore every parameter have an average value and a +/- range,
-                        #      and the Monte Carlo chooses a value in this range,
-                        #      uniformly distributed over the range.
-                        #      This models the basic compartments of Susceptible, Exposed, Infected, Critical, Dead and Recovered.
-                        #      Only the non-immuned population can get exposed. Infected can either become Critical (needing ICU) or Recovered.
-                        #      Critical can become Dead or Recovered.
-                        #      Note: Looping over many Monte Carlo rounds improves the noise but takes longer. 200 rounds
-                        #      were good for the median graphs, 1000 were needed for good histograms.
-                        #     '''
-                        #              )
-                    ],
-                    fluid=True,
-                )
-            ],
-            fluid=True,
-            className="jumbotron bg-white text-dark"
-        ),
+        # dbc.Jumbotron(
+        #     [
+        #         dbc.Container(
+        #             [
+        #                 # html.H1("SEIR Monte Carlo model", className="display-3"),
+        #                 # html.P(
+        #                 #     "Interactively change by pressing the blue 'apply' button. ",
+        #                 #     className="lead",
+        #                 # ),
+        #                 # html.Hr(className="my-2"),
+        #                 # dcc.Markdown('''
+        #                 #      This model is intended to give a feeling how bad an epidemic can get if we "do nothing",
+        #                 #      meaning R0 stays constant with time.
+        #                 #      Many parameters have a range of uncertainty, therefore every parameter have an average value and a +/- range,
+        #                 #      and the Monte Carlo chooses a value in this range,
+        #                 #      uniformly distributed over the range.
+        #                 #      This models the basic compartments of Susceptible, Exposed, Infected, Critical, Dead and Recovered.
+        #                 #      Only the non-immuned population can get exposed. Infected can either become Critical (needing ICU) or Recovered.
+        #                 #      Critical can become Dead or Recovered.
+        #                 #      Note: Looping over many Monte Carlo rounds improves the noise but takes longer. 200 rounds
+        #                 #      were good for the median graphs, 1000 were needed for good histograms.
+        #                 #     '''
+        #                 #              )
+        #             ],
+        #             fluid=True,
+        #         )
+        #     ],
+        #     fluid=True,
+        #     className="jumbotron bg-white text-dark"
+        # ),
         # now onto the main page, i.e. the controls on the left
         # and the graphs on the right.
         dbc.Row(
             [
-                # here we place the controls we just defined,
-                # and tell them to use up the left 3/12ths of the page.
-                dbc.Col(controls, md=2),
-                # now we place the graphs on the page, taking up
-                # the right 9/12ths.
+                # here we place the controls we just defined, and tell them to use up the left 3/12ths of the page.
+                dbc.Col(controls),
+                # now we place the graphs on the page, taking up the right 9/12ths.
                 dbc.Col(
                     [
                         dbc.Row(
                             [
                                 # the graph for the IFR over time, only for up to 20 runs (otherwise it is too crowded)
-                                dbc.Col(dcc.Graph(id='IFR_vs_t'), md=4),
+                                dbc.Col(dcc.Graph(id='IFR_vs_t')),
                                 # the graph for the critical over time, only for up to 20 runs (otherwise it is too crowded)
-                                dbc.Col(dcc.Graph(id='C_vs_t'), md=4),
+                                dbc.Col(dcc.Graph(id='C_vs_t')),
                                 # the graph for the dead over time, only for up to 20 runs (otherwise it is too crowded)
-                                dbc.Col(dcc.Graph(id='D_vs_t'), md=4),
-                            ]
+                                dbc.Col(dcc.Graph(id='D_vs_t')),
+                            ], no_gutters=noGuttersState
                         ),
                         dbc.Row(
                             [
                                 # the graph for the IFR histogram
-                                dbc.Col(dcc.Graph(id='histIFR'), md=4),
+                                dbc.Col(dcc.Graph(id='histIFR')),
                                 # the graph for histogram of critical.
-                                dbc.Col(dcc.Graph(id="histC"), md=4),
+                                dbc.Col(dcc.Graph(id="histC")),
                                 # the graph for histogram of dead.
-                                dbc.Col(dcc.Graph(id='histD'), md=4),
-                            ]
+                                dbc.Col(dcc.Graph(id='histD')),
+                            ], no_gutters=noGuttersState
                         ),
                         dbc.Row(
                             [
                                 # the graph for the IFR median over time
-                                dbc.Col(dcc.Graph(id='medIFR'), md=4),
+                                dbc.Col(dcc.Graph(id='medIFR')),
                                 # the graph for the critical median over time
-                                dbc.Col(dcc.Graph(id="medC"), md=4),
+                                dbc.Col(dcc.Graph(id="medC")),
                                 # the graph for the dead median over time
-                                dbc.Col(dcc.Graph(id='medD'), md=4),
-                            ]
+                                dbc.Col(dcc.Graph(id='medD')),
+                                ], no_gutters=noGuttersState
                         ),
                     ],
-                    md=9
+                    md=10
                 ),
             ],
             align="top",
@@ -515,7 +514,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
         df_D_vs_t = pd.DataFrame(D_vs_t)  # compartment value for each day is appended as new row
     I_vs_t = px.line(df_I_vs_t[1:20].T,
                title="Number of Infected vs. time, per Monte Carlo run <br>(maximum 20 runs are shown)",
-               width=600, height=400,
+               # width=600, height=400,
                labels={  # replaces default labels by column name
                    # ... thanks to https://plotly.com/python/styling-plotly-express/
                    "index": "time [days]", "value": "Number of Infected"
@@ -525,7 +524,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
     I_vs_t.update_layout()
     IFR_vs_t = px.line(df_IFR_vs_t[1:20].T,
                title="IFR (Infected / Dead) vs. time, per Monte Carlo run <br>(maximum 20 runs are shown)",
-               width=600, height=400,
+               # width=600, height=400,
                labels={  # replaces default labels by column name
                    # ... thanks to https://plotly.com/python/styling-plotly-express/
                    "index": "time [days]", "value": "IFR [%]"
@@ -536,7 +535,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
 
     C_vs_t = px.line(df_C_vs_t[1:20].T,
                    title="Number of Critically sick vs. time, per Monte Carlo run <br>(maximum 20 runs are shown)",
-                   width=600, height=400,
+                   # width=600, height=400,
                    labels={  # replaces default labels by column name
                        # ... thanks to https://plotly.com/python/styling-plotly-express/
                        "index": "time [days]", "value": "Number of Critical"
@@ -545,7 +544,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
     C_vs_t.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
     D_vs_t = px.line(df_D_vs_t[1:20].T,
                    title="Number of Dead vs. time, per Monte Carlo run <br>(maximum 20 runs are shown)",
-                   width=600, height=400,
+                   # width=600, height=400,
                    labels={  # replaces default labels by column name
                        # ... thanks to https://plotly.com/python/styling-plotly-express/
                        "index": "time [days]", "value": "Number of Dead"
@@ -555,20 +554,23 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
     # Histograms
     histIFR = px.histogram(df_results, x="total IFR",
                         title="Histogram of IFR (Infected / Dead) [%] <br>over all Monte Carlo runs",
-                        width=600, height=400,)
+                        # width=600, height=400,
+                           )
     histC = px.histogram(df_results, x="peak C",
                         title="Histogram of peak number of Critically sick <br>over all Monte Carlo runs",
-                        width=600, height=400,)
+                        # width=600, height=400,
+                         )
     histD = px.histogram(df_results, x="max D",
                         title="Histogram of final number of Dead <br>over all Monte Carlo runs",
-                        width=600, height=400,)
+                        # width=600, height=400,
+                         )
     # Median graphs
     oneSigmaI = df_I_vs_t.T.apply(np.std, axis=1)
     medianI = df_I_vs_t.T.apply(np.median, axis=1)
     medianI_df = pd.DataFrame(data={'median': medianI, 'median+STD': medianI + oneSigmaI})
     medI = px.line(medianI_df,
                    title="Median of Infected vs. time, over all Monte Carlo runs",
-                   width=600, height=400,
+                   # width=600, height=400,
                    labels={  # replaces default labels by column name
                        # ... thanks to https://plotly.com/python/styling-plotly-express/
                        "index": "time [days]", "value": "Median of Infected"
@@ -581,7 +583,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
     medianRangeC_df = pd.DataFrame(data={'median': medianC, 'median+STD': medianC + oneSigmaC})
     medC = px.line(medianRangeC_df,
                    title="Median of number of Critically sick vs. time,<br>over all Monte Carlo runs",
-                   width=600, height=400,
+                   # width=600, height=400,
                    labels={  # replaces default labels by column name
                        # ... thanks to https://plotly.com/python/styling-plotly-express/
                        "index": "time [days]", "value": "Median of Critical"
@@ -595,7 +597,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
     medianRangeD_df = pd.DataFrame(data={'median': medianD, 'median+STD': medianD + oneSigmaD})
     medD = px.line(medianRangeD_df,
                    title="Median of number of Dead vs. time, <br>over all Monte Carlo runs",
-                   width=600, height=400,
+                   # width=600, height=400,
                    labels={  # replaces default labels by column name
                        # ... thanks to https://plotly.com/python/styling-plotly-express/
                        "index": "time [days]", "value": "Median of Dead"
@@ -609,7 +611,7 @@ def update_figure(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, 
         data={'median': medianIFR, 'median+STD': medianIFR + oneSigmaIFR, 'median-STD': medianIFR - oneSigmaIFR})
     medIFR = px.line(medianRangeIFR_df,
                     title="Median of IFR (Infected / Dead) vs. time,<br>over all Monte Carlo runs",
-                    width=600, height=400,
+                    # width=600, height=400,
                     labels={  # replaces default labels by column name
                         # ... thanks to https://plotly.com/python/styling-plotly-express/
                         "index": "time [days]", "value": "Median of IFR [%]"
