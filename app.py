@@ -558,15 +558,6 @@ def recalculate(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, p_
     return (df_results_json, df_IFR_vs_t_json, df_I_vs_t_json, df_C_vs_t_json, df_D_vs_t_json)
 
 
-# replaces a None with an empty string
-def repNoneWithEmpty(inp):
-    if inp is None:
-        inp = []
-    return inp
-
-
-
-# "recalculate" is returning df_results, df_IFR_vs_t, df_I_vs_t, df_C_vs_t, df_D_vs_t
 # graph results
 @app.callback(
     [dash.dependencies.Output('IFR_vs_t', 'figure'), dash.dependencies.Output('C_vs_t', 'figure'),
