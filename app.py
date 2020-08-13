@@ -558,18 +558,13 @@ def recalculate(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, p_
     return (df_results_json, df_IFR_vs_t_json, df_I_vs_t_json, df_C_vs_t_json, df_D_vs_t_json)
 
 
-# graph results
+# graph results: time dependancieas (compartments (and IFR) vs. time)
 @app.callback(
     [dash.dependencies.Output('IFR_vs_t', 'figure'), dash.dependencies.Output('C_vs_t', 'figure'),
-     dash.dependencies.Output('D_vs_t', 'figure'), dash.dependencies.Output('histIFR', 'figure'),
-     dash.dependencies.Output('histC', 'figure'), dash.dependencies.Output('histD', 'figure'),
-     dash.dependencies.Output('medIFR', 'figure'), dash.dependencies.Output('medC', 'figure'),
-     dash.dependencies.Output('medD', 'figure'),
+     dash.dependencies.Output('D_vs_t', 'figure'),
      ],
     [dash.dependencies.Input('submit-button-state', 'n_clicks'),
-     dash.dependencies.Input('df_results_json', 'children'),
      dash.dependencies.Input('df_IFR_vs_t_json', 'children'),
-     dash.dependencies.Input('df_I_vs_t_json', 'children'),
      dash.dependencies.Input('df_C_vs_t_json', 'children'),
      dash.dependencies.Input('df_D_vs_t_json', 'children'),
      ],
@@ -577,24 +572,22 @@ def recalculate(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, p_
 
      ]
 )
-def update_figures(n_clicks, df_results_json, df_IFR_vs_t_json, df_I_vs_t_json, df_C_vs_t_json, df_D_vs_t_json , num_reps):
-    print('in callback update figures, num_reps = ', num_reps)
-    df_results = pd.read_json(df_results_json)
+def update_figures_time_dependancies(n_clicks, df_IFR_vs_t_json, df_C_vs_t_json, df_D_vs_t_json , num_reps):
+    print('in callback update_figures_time_dependancies, num_reps = ', num_reps)
     df_IFR_vs_t = pd.read_json(df_IFR_vs_t_json)
-    df_I_vs_t = pd.read_json(df_I_vs_t_json)
     df_C_vs_t = pd.read_json(df_C_vs_t_json)
     df_D_vs_t = pd.read_json(df_D_vs_t_json)
 
-    I_vs_t = px.line(df_I_vs_t[1:20].T,
-               title="Number of Infected vs. time, per Monte Carlo run <br>(maximum 20 runs are shown)",
-               # width=600, height=400,
-               labels={  # replaces default labels by column name
-                   # ... thanks to https://plotly.com/python/styling-plotly-express/
-                   "index": "time [days]", "value": "Number of Infected"
-               },
-               )
-    I_vs_t.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
-    I_vs_t.update_layout()
+    # I_vs_t = px.line(df_I_vs_t[1:20].T,
+    #            title="Number of Infected vs. time, per Monte Carlo run <br>(maximum 20 runs are shown)",
+    #            # width=600, height=400,
+    #            labels={  # replaces default labels by column name
+    #                # ... thanks to https://plotly.com/python/styling-plotly-express/
+    #                "index": "time [days]", "value": "Number of Infected"
+    #            },
+    #            )
+    # I_vs_t.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
+    # I_vs_t.update_layout()
     IFR_vs_t = px.line(df_IFR_vs_t[1:20].T,
                title="IFR (Infected / Dead) vs. time, per Monte Carlo run <br>(maximum 20 runs are shown)",
                # width=600, height=400,
@@ -624,6 +617,24 @@ def update_figures(n_clicks, df_results_json, df_IFR_vs_t_json, df_I_vs_t_json, 
                    },
                    )
     D_vs_t.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
+    return [IFR_vs_t, C_vs_t, D_vs_t]
+
+# Graph histograms
+@app.callback(
+    [dash.dependencies.Output('histIFR', 'figure'),
+     dash.dependencies.Output('histC', 'figure'), dash.dependencies.Output('histD', 'figure'),
+     ],
+    [dash.dependencies.Input('submit-button-state', 'n_clicks'),
+     dash.dependencies.Input('df_results_json', 'children'),
+     ],
+    [dash.dependencies.State('num_reps', 'value'),
+
+     ]
+)
+def update_figures_histograms(n_clicks, df_results_json, num_reps):
+    print('in callback update_figures_histograms, num_reps = ', num_reps)
+    df_results = pd.read_json(df_results_json)
+
     # Histograms
     histIFR = px.histogram(df_results, x="total IFR",
                         title="Histogram of IFR (Infected / Dead) [%] <br>over all Monte Carlo runs",
@@ -637,19 +648,29 @@ def update_figures(n_clicks, df_results_json, df_IFR_vs_t_json, df_I_vs_t_json, 
                         title="Histogram of final number of Dead <br>over all Monte Carlo runs",
                         # width=600, height=400,
                          )
+    return [histIFR, histC, histD]
+
+# Graph medians
+@app.callback(
+    [dash.dependencies.Output('medIFR', 'figure'), dash.dependencies.Output('medC', 'figure'),
+     dash.dependencies.Output('medD', 'figure'),
+     ],
+    [dash.dependencies.Input('submit-button-state', 'n_clicks'),
+     dash.dependencies.Input('df_IFR_vs_t_json', 'children'),
+     dash.dependencies.Input('df_C_vs_t_json', 'children'),
+     dash.dependencies.Input('df_D_vs_t_json', 'children'),
+     ],
+    [dash.dependencies.State('num_reps', 'value'),
+
+     ]
+)
+def update_figures_medians(n_clicks, df_IFR_vs_t_json, df_C_vs_t_json, df_D_vs_t_json , num_reps):
+    print('in callback update figures, num_reps = ', num_reps)
+    df_IFR_vs_t = pd.read_json(df_IFR_vs_t_json)
+    df_C_vs_t = pd.read_json(df_C_vs_t_json)
+    df_D_vs_t = pd.read_json(df_D_vs_t_json)
+
     # Median graphs
-    oneSigmaI = df_I_vs_t.T.apply(np.std, axis=1)
-    medianI = df_I_vs_t.T.apply(np.median, axis=1)
-    medianI_df = pd.DataFrame(data={'median': medianI, 'median+STD': medianI + oneSigmaI})
-    medI = px.line(medianI_df,
-                   title="Median of Infected vs. time, over all Monte Carlo runs",
-                   # width=600, height=400,
-                   labels={  # replaces default labels by column name
-                       # ... thanks to https://plotly.com/python/styling-plotly-express/
-                       "index": "time [days]", "value": "Median of Infected"
-                   },
-                   )
-    medI.update_layout(legend=dict(x=0, y=1, traceorder="normal"))  # place legend inside
 
     oneSigmaC = df_C_vs_t.T.apply(np.std, axis=1)
     medianC = df_C_vs_t.T.apply(np.median, axis=1)
@@ -691,7 +712,8 @@ def update_figures(n_clicks, df_results_json, df_IFR_vs_t_json, df_I_vs_t_json, 
                     },
                     )
     medIFR.update_layout(legend=dict(x=0, y=1, traceorder="normal"))  # place legend inside
-    return [IFR_vs_t, C_vs_t, D_vs_t, histIFR, histC, histD, medIFR, medC, medD]
+    return [medIFR, medC, medD]
+
 
 if __name__ == '__main__':
     app.run_server(debug=True)
