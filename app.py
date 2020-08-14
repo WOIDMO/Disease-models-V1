@@ -144,7 +144,7 @@ controls = dbc.Card(
                 dbc.Label("Number of Monte Carlo loops"),
                 dbc.Input(
                     id="num_reps", type="number", placeholder="num_reps",
-                    min=1, max=5000, step=1, value=num_reps,
+                    min=10, max=5000, step=10, value=num_reps,
                 )
             ]
         ),
@@ -618,7 +618,7 @@ def update_figures_time_dependancies(n_clicks, df_IFR_vs_t_json, df_C_vs_t_json,
     # I_vs_t.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
     # I_vs_t.update_layout()
     IFR_vs_t = px.line(df_IFR_vs_t[1:10].T,
-               title="IFR (Infected / Dead) vs. time, per Monte Carlo run <br>(maximum 10 runs are shown)",
+               title="IFR (Infected / Dead) vs. time, per Monte Carlo run <br>(10 first runs are shown)",
                # width=600, height=400,
                labels={  # replaces default labels by column name
                    # ... thanks to https://plotly.com/python/styling-plotly-express/
@@ -629,7 +629,7 @@ def update_figures_time_dependancies(n_clicks, df_IFR_vs_t_json, df_C_vs_t_json,
     IFR_vs_t.update_layout()
 
     C_vs_t = px.line(df_C_vs_t[1:10].T,
-                   title="Number of Critically sick vs. time, per Monte Carlo run <br>(maximum 10 runs are shown)",
+                   title="Number of Critically sick vs. time, per Monte Carlo run <br>(10 first runs are shown)",
                    # width=600, height=400,
                    labels={  # replaces default labels by column name
                        # ... thanks to https://plotly.com/python/styling-plotly-express/
@@ -638,7 +638,7 @@ def update_figures_time_dependancies(n_clicks, df_IFR_vs_t_json, df_C_vs_t_json,
                    )
     C_vs_t.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
     D_vs_t = px.line(df_D_vs_t[1:10].T,
-                   title="Number of Dead vs. time, per Monte Carlo run <br>(maximum 10 runs are shown)",
+                   title="Number of Dead vs. time, per Monte Carlo run <br>(10 first runs are shown)",
                    # width=600, height=400,
                    labels={  # replaces default labels by column name
                        # ... thanks to https://plotly.com/python/styling-plotly-express/
