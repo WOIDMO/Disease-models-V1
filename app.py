@@ -411,9 +411,11 @@ app.layout = dbc.Container(
                         # following https://github.com/plotly/dash/issues/49#issuecomment-311511286
                         html.Div(id='df_results_json', style={'display': 'none'}),
                         html.Div(id='df_IFR_vs_t_json', style={'display': 'none'}),
-                        html.Div(id='df_I_vs_t_json', style={'display': 'none'}),
                         html.Div(id='df_C_vs_t_json', style={'display': 'none'}),
                         html.Div(id='df_D_vs_t_json', style={'display': 'none'}),
+                        html.Div(id='medianRangeC_df_jason', style={'display': 'none'}),
+                        html.Div(id='medianRangeD_df_jason', style={'display': 'none'}),
+                        html.Div(id='medianRangeIFR_df_jason', style={'display': 'none'}),
                     ],
                     md=10
                 ),
@@ -433,6 +435,9 @@ app.layout = dbc.Container(
      # dash.dependencies.Output('df_I_vs_t_json', 'children'), dash.dependencies.Output('df_C_vs_t_json', 'children'),
      dash.dependencies.Output('df_C_vs_t_json', 'children'),
      dash.dependencies.Output('df_D_vs_t_json', 'children'),
+     dash.dependencies.Output('medianRangeC_df_jason', 'children'),
+     dash.dependencies.Output('medianRangeD_df_jason', 'children'),
+     dash.dependencies.Output('medianRangeIFR_df_jason', 'children'),
      ],
     [dash.dependencies.Input('submit-button-state', 'n_clicks')],
     [dash.dependencies.State('num_reps', 'value'),
@@ -551,14 +556,35 @@ def recalculate(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, p_
     print(min(df_results['max D']), max(df_results['max D']), min(df_results['peak R']), max(df_results['peak R']))
     print('min / max IFR')
     print(min(df_results['total IFR']), max(df_results['total IFR']))
-    # return [IFR_vs_t, C_vs_t, D_vs_t, histIFR, histC, histD, medIFR, medC, medD]
+
+
+
+    # prepare the data for the median graphs
+    oneSigmaC = df_C_vs_t.T.apply(np.std, axis=1)
+    medianC = df_C_vs_t.T.apply(np.median, axis=1)
+    medianRangeC_df = pd.DataFrame(data={'median': medianC, 'median+STD': medianC + oneSigmaC})
+    oneSigmaD = df_D_vs_t.T.apply(np.std, axis=1)
+    medianD = df_D_vs_t.T.apply(np.median, axis=1)
+    medianRangeD_df = pd.DataFrame(data={'median': medianD, 'median+STD': medianD + oneSigmaD})
+    oneSigmaIFR = df_IFR_vs_t.T.apply(np.std, axis=1)
+    medianIFR = df_IFR_vs_t.T.apply(np.median, axis=1)
+    medianRangeIFR_df = pd.DataFrame(
+        data={'median': medianIFR, 'median+STD': medianIFR + oneSigmaIFR, 'median-STD': medianIFR - oneSigmaIFR})
+
+    # make results into JSON for sharing between callbacks
     df_results_json = df_results.to_json()
-    df_IFR_vs_t_json = df_IFR_vs_t[1:10].to_json()
+    df_IFR_vs_t_json = df_IFR_vs_t[0:10].to_json()
     # df_I_vs_t_json = df_I_vs_t.to_json()
-    df_C_vs_t_json = df_C_vs_t[1:10].to_json()
-    df_D_vs_t_json = df_D_vs_t[1:10].to_json()
+    df_C_vs_t_json = df_C_vs_t[0:10].to_json()
+    df_D_vs_t_json = df_D_vs_t[0:10].to_json()
+    medianRangeC_df_jason = medianRangeC_df.to_json()
+    medianRangeD_df_jason = medianRangeD_df.to_json()
+    medianRangeIFR_df_jason = medianRangeIFR_df.to_json()
+
     # return (df_results_json, df_IFR_vs_t_json, df_I_vs_t_json, df_C_vs_t_json, df_D_vs_t_json)
-    return (df_results_json, df_IFR_vs_t_json, df_C_vs_t_json, df_D_vs_t_json)
+    return (df_results_json,
+            df_IFR_vs_t_json, df_C_vs_t_json, df_D_vs_t_json,
+            medianRangeC_df_jason, medianRangeD_df_jason, medianRangeIFR_df_jason)
 
 
 # graph results: time dependancieas (compartments (and IFR) vs. time)
@@ -637,10 +663,10 @@ def update_figures_time_dependancies(n_clicks, df_IFR_vs_t_json, df_C_vs_t_json,
 def update_figures_histograms(n_clicks, df_results_json, num_reps):
     print('in callback update_figures_histograms, num_reps = ', num_reps)
     df_results = pd.read_json(df_results_json)
-
+    df_results_size = df_results.shape
     # Histograms
     histIFR = px.histogram(df_results, x="total IFR",
-                        title="Histogram of IFR (Infected / Dead) [%] <br>over " + str(num_reps) + " Monte Carlo runs",
+                        title="Histogram of IFR (Infected / Dead) [%] <br>over " + str(num_reps) + " Monte Carlo runs (=" + str(df_results_size[0]) +"?)",
                         # width=600, height=400,
                            )
     histC = px.histogram(df_results, x="peak C",
@@ -659,24 +685,21 @@ def update_figures_histograms(n_clicks, df_results_json, num_reps):
      dash.dependencies.Output('medD', 'figure'),
      ],
     [dash.dependencies.Input('submit-button-state', 'n_clicks'),
-     dash.dependencies.Input('df_IFR_vs_t_json', 'children'),
-     dash.dependencies.Input('df_C_vs_t_json', 'children'),
-     dash.dependencies.Input('df_D_vs_t_json', 'children'),
+     dash.dependencies.Input('medianRangeC_df_jason', 'children'),
+     dash.dependencies.Input('medianRangeD_df_jason', 'children'),
+     dash.dependencies.Input('medianRangeIFR_df_jason', 'children'),
      ],
     [dash.dependencies.State('num_reps', 'value'),
 
      ]
 )
-def update_figures_medians(n_clicks, df_IFR_vs_t_json, df_C_vs_t_json, df_D_vs_t_json , num_reps):
+def update_figures_medians(n_clicks, medianRangeC_df_jason, medianRangeD_df_jason, medianRangeIFR_df_jason , num_reps):
     print('in callback update figures, num_reps = ', num_reps)
-    df_IFR_vs_t = pd.read_json(df_IFR_vs_t_json)
-    df_C_vs_t = pd.read_json(df_C_vs_t_json)
-    df_D_vs_t = pd.read_json(df_D_vs_t_json)
+    medianRangeIFR_df = pd.read_json(medianRangeIFR_df_jason)
+    medianRangeC_df = pd.read_json(medianRangeC_df_jason)
+    medianRangeD_df = pd.read_json(medianRangeD_df_jason)
 
     # Median graphs
-    oneSigmaC = df_C_vs_t.T.apply(np.std, axis=1)
-    medianC = df_C_vs_t.T.apply(np.median, axis=1)
-    medianRangeC_df = pd.DataFrame(data={'median': medianC, 'median+STD': medianC + oneSigmaC})
     medC = px.line(medianRangeC_df,
                    title="Median of number of Critically sick vs. time,<br>over " + str(num_reps) + " Monte Carlo runs",
                    # width=600, height=400,
@@ -687,10 +710,6 @@ def update_figures_medians(n_clicks, df_IFR_vs_t_json, df_C_vs_t_json, df_D_vs_t
                    )
     medC.update_layout(legend=dict(x=0, y=1, traceorder="normal"))  # place legend inside
 
-
-    oneSigmaD = df_D_vs_t.T.apply(np.std, axis=1)
-    medianD = df_D_vs_t.T.apply(np.median, axis=1)
-    medianRangeD_df = pd.DataFrame(data={'median': medianD, 'median+STD': medianD + oneSigmaD})
     medD = px.line(medianRangeD_df,
                    title="Median of number of Dead vs. time, <br>over " + str(num_reps) + " Monte Carlo runs",
                    # width=600, height=400,
@@ -701,10 +720,6 @@ def update_figures_medians(n_clicks, df_IFR_vs_t_json, df_C_vs_t_json, df_D_vs_t
                    )
     medD.update_layout(legend=dict(x=0, y=1, traceorder="normal"))  # place legend inside
 
-    oneSigmaIFR = df_IFR_vs_t.T.apply(np.std, axis=1)
-    medianIFR = df_IFR_vs_t.T.apply(np.median, axis=1)
-    medianRangeIFR_df = pd.DataFrame(
-        data={'median': medianIFR, 'median+STD': medianIFR + oneSigmaIFR, 'median-STD': medianIFR - oneSigmaIFR})
     medIFR = px.line(medianRangeIFR_df,
                     title="Median of IFR (Infected / Dead) vs. time,<br>over " + str(num_reps) + " Monte Carlo runs",
                     # width=600, height=400,
