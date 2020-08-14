@@ -429,7 +429,8 @@ app.layout = dbc.Container(
 # re-calculate Monte Carlo
 @app.callback(
     [dash.dependencies.Output('df_results_json', 'children'), dash.dependencies.Output('df_IFR_vs_t_json', 'children'),
-     dash.dependencies.Output('df_I_vs_t_json', 'children'), dash.dependencies.Output('df_C_vs_t_json', 'children'),
+     # dash.dependencies.Output('df_I_vs_t_json', 'children'), dash.dependencies.Output('df_C_vs_t_json', 'children'),
+     dash.dependencies.Output('df_C_vs_t_json', 'children'),
      dash.dependencies.Output('df_D_vs_t_json', 'children'),
      ],
     [dash.dependencies.Input('submit-button-state', 'n_clicks')],
@@ -551,11 +552,12 @@ def recalculate(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, p_
     print(min(df_results['total IFR']), max(df_results['total IFR']))
     # return [IFR_vs_t, C_vs_t, D_vs_t, histIFR, histC, histD, medIFR, medC, medD]
     df_results_json = df_results.to_json()
-    df_IFR_vs_t_json = df_IFR_vs_t.to_json()
-    df_I_vs_t_json = df_I_vs_t.to_json()
-    df_C_vs_t_json = df_C_vs_t.to_json()
-    df_D_vs_t_json = df_D_vs_t.to_json()
-    return (df_results_json, df_IFR_vs_t_json, df_I_vs_t_json, df_C_vs_t_json, df_D_vs_t_json)
+    df_IFR_vs_t_json = df_IFR_vs_t[1:10].to_json()
+    # df_I_vs_t_json = df_I_vs_t.to_json()
+    df_C_vs_t_json = df_C_vs_t[1:10].to_json()
+    df_D_vs_t_json = df_D_vs_t[1:10].to_json()
+    # return (df_results_json, df_IFR_vs_t_json, df_I_vs_t_json, df_C_vs_t_json, df_D_vs_t_json)
+    return (df_results_json, df_IFR_vs_t_json, df_C_vs_t_json, df_D_vs_t_json)
 
 
 # graph results: time dependancieas (compartments (and IFR) vs. time)
@@ -588,8 +590,8 @@ def update_figures_time_dependancies(n_clicks, df_IFR_vs_t_json, df_C_vs_t_json,
     #            )
     # I_vs_t.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
     # I_vs_t.update_layout()
-    IFR_vs_t = px.line(df_IFR_vs_t[1:20].T,
-               title="IFR (Infected / Dead) vs. time, per Monte Carlo run <br>(maximum 20 runs are shown)",
+    IFR_vs_t = px.line(df_IFR_vs_t[1:10].T,
+               title="IFR (Infected / Dead) vs. time, per Monte Carlo run <br>(maximum 10 runs are shown)",
                # width=600, height=400,
                labels={  # replaces default labels by column name
                    # ... thanks to https://plotly.com/python/styling-plotly-express/
@@ -599,8 +601,8 @@ def update_figures_time_dependancies(n_clicks, df_IFR_vs_t_json, df_C_vs_t_json,
     IFR_vs_t.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
     IFR_vs_t.update_layout()
 
-    C_vs_t = px.line(df_C_vs_t[1:20].T,
-                   title="Number of Critically sick vs. time, per Monte Carlo run <br>(maximum 20 runs are shown)",
+    C_vs_t = px.line(df_C_vs_t[1:10].T,
+                   title="Number of Critically sick vs. time, per Monte Carlo run <br>(maximum 10 runs are shown)",
                    # width=600, height=400,
                    labels={  # replaces default labels by column name
                        # ... thanks to https://plotly.com/python/styling-plotly-express/
@@ -608,8 +610,8 @@ def update_figures_time_dependancies(n_clicks, df_IFR_vs_t_json, df_C_vs_t_json,
                    },
                    )
     C_vs_t.layout.update(showlegend=False)  # eliminate legends as they can be very long (one for each Monte Carlo run)
-    D_vs_t = px.line(df_D_vs_t[1:20].T,
-                   title="Number of Dead vs. time, per Monte Carlo run <br>(maximum 20 runs are shown)",
+    D_vs_t = px.line(df_D_vs_t[1:10].T,
+                   title="Number of Dead vs. time, per Monte Carlo run <br>(maximum 10 runs are shown)",
                    # width=600, height=400,
                    labels={  # replaces default labels by column name
                        # ... thanks to https://plotly.com/python/styling-plotly-express/
@@ -637,15 +639,15 @@ def update_figures_histograms(n_clicks, df_results_json, num_reps):
 
     # Histograms
     histIFR = px.histogram(df_results, x="total IFR",
-                        title="Histogram of IFR (Infected / Dead) [%] <br>over all Monte Carlo runs",
+                        title="Histogram of IFR (Infected / Dead) [%] <br>over "+str(num_reps)+" Monte Carlo runs",
                         # width=600, height=400,
                            )
     histC = px.histogram(df_results, x="peak C",
-                        title="Histogram of peak number of Critically sick <br>over all Monte Carlo runs",
+                        title="Histogram of peak number of Critically sick <br>over "+str(num_reps)+" Monte Carlo runs",
                         # width=600, height=400,
                          )
     histD = px.histogram(df_results, x="max D",
-                        title="Histogram of final number of Dead <br>over all Monte Carlo runs",
+                        title="Histogram of final number of Dead <br>over "+str(num_reps)+" Monte Carlo runs",
                         # width=600, height=400,
                          )
     return [histIFR, histC, histD]
@@ -676,7 +678,7 @@ def update_figures_medians(n_clicks, df_IFR_vs_t_json, df_C_vs_t_json, df_D_vs_t
     medianC = df_C_vs_t.T.apply(np.median, axis=1)
     medianRangeC_df = pd.DataFrame(data={'median': medianC, 'median+STD': medianC + oneSigmaC})
     medC = px.line(medianRangeC_df,
-                   title="Median of number of Critically sick vs. time,<br>over all Monte Carlo runs",
+                   title="Median of number of Critically sick vs. time,<br>over "+str(num_reps)+" Monte Carlo runs",
                    # width=600, height=400,
                    labels={  # replaces default labels by column name
                        # ... thanks to https://plotly.com/python/styling-plotly-express/
@@ -690,7 +692,7 @@ def update_figures_medians(n_clicks, df_IFR_vs_t_json, df_C_vs_t_json, df_D_vs_t
     medianD = df_D_vs_t.T.apply(np.median, axis=1)
     medianRangeD_df = pd.DataFrame(data={'median': medianD, 'median+STD': medianD + oneSigmaD})
     medD = px.line(medianRangeD_df,
-                   title="Median of number of Dead vs. time, <br>over all Monte Carlo runs",
+                   title="Median of number of Dead vs. time, <br>over "+str(num_reps)+" Monte Carlo runs",
                    # width=600, height=400,
                    labels={  # replaces default labels by column name
                        # ... thanks to https://plotly.com/python/styling-plotly-express/
@@ -704,7 +706,7 @@ def update_figures_medians(n_clicks, df_IFR_vs_t_json, df_C_vs_t_json, df_D_vs_t
     medianRangeIFR_df = pd.DataFrame(
         data={'median': medianIFR, 'median+STD': medianIFR + oneSigmaIFR, 'median-STD': medianIFR - oneSigmaIFR})
     medIFR = px.line(medianRangeIFR_df,
-                    title="Median of IFR (Infected / Dead) vs. time,<br>over all Monte Carlo runs",
+                    title="Median of IFR (Infected / Dead) vs. time,<br>over "+str(num_reps)+" Monte Carlo runs",
                     # width=600, height=400,
                     labels={  # replaces default labels by column name
                         # ... thanks to https://plotly.com/python/styling-plotly-express/
