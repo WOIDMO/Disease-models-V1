@@ -58,7 +58,7 @@ print(disease)
 # The section below is intended to be modular, so we can easily add other disease model.
 if disease == 'Covid_19':
     p_immune_avg, p_immune_err = 6 / 100, 1 / 100
-    R_0_avg, R_0_err = 3.82, 1.88
+    R_0_avg, R_0_err = 3.8, 0.2
     T_infectious_avg, T_infectious_err = 10, 2
     T_incubation_avg, T_incubation_err = 5.5, 2.5
     p_I_to_C_avg, p_I_to_C_err = 5.5 / 100, 2.5 / 100
@@ -189,7 +189,7 @@ controls = dbc.Card(
                 dbc.Label("R0"),
                 dbc.Input(
                     id="R_0_avg", type="number", placeholder="R_0_avg",
-                    min=1, max=10, step=0.01, value=R_0_avg,
+                    min=0, max=10, step=0.01, value=R_0_avg,
                 )
             ]
         ),
