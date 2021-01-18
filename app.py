@@ -562,10 +562,16 @@ def recalculate(n_clicks,num_reps, population, initial_cases, p_immune_avg_p, p_
     # prepare the data for the median graphs
     oneSigmaC = df_C_vs_t.T.apply(np.std, axis=1)
     medianC = df_C_vs_t.T.apply(np.median, axis=1)
-    medianRangeC_df = pd.DataFrame(data={'median': medianC, 'median+STD': medianC + oneSigmaC})
+    # medianRangeC_df = pd.DataFrame(data={'median': medianC, 'median+STD': medianC + oneSigmaC})
+    med_min_STD_C = medianC - oneSigmaC
+    truncated_med_min_STD_C = med_min_STD_C.clip(lower=0, upper=None)  # truncating to avoid negative values
+    medianRangeC_df = pd.DataFrame(data={'median': medianC, 'median+STD': medianC + oneSigmaC, 'median-STD': truncated_med_min_STD_C})
     oneSigmaD = df_D_vs_t.T.apply(np.std, axis=1)
     medianD = df_D_vs_t.T.apply(np.median, axis=1)
-    medianRangeD_df = pd.DataFrame(data={'median': medianD, 'median+STD': medianD + oneSigmaD})
+    # medianRangeD_df = pd.DataFrame(data={'median': medianD, 'median+STD': medianD + oneSigmaD})
+    med_min_STD_D = medianD - oneSigmaD
+    truncated_med_min_STD_D = med_min_STD_D.clip(lower=0, upper=None)  # truncating to avoid negative values
+    medianRangeD_df = pd.DataFrame(data={'median': medianD, 'median+STD': medianD + oneSigmaD, 'median-STD': truncated_med_min_STD_D})
     oneSigmaIFR = df_IFR_vs_t.T.apply(np.std, axis=1)
     medianIFR = df_IFR_vs_t.T.apply(np.median, axis=1)
     medianRangeIFR_df = pd.DataFrame(
@@ -708,7 +714,7 @@ def update_figures_medians(n_clicks, medianRangeC_df_jason, medianRangeD_df_jaso
                        "index": "time [days]", "value": "Median of Critical"
                    },
                    )
-    medC.update_layout(legend=dict(x=0, y=1, traceorder="normal"))  # place legend inside
+    medC.update_layout(legend=dict(x=0.1, y= -0.6, traceorder="normal"))  # place legend below
 
     medD = px.line(medianRangeD_df,
                    title="Median of number of Dead vs. time, <br>over " + str(num_reps) + " Monte Carlo runs",
@@ -718,7 +724,7 @@ def update_figures_medians(n_clicks, medianRangeC_df_jason, medianRangeD_df_jaso
                        "index": "time [days]", "value": "Median of Dead"
                    },
                    )
-    medD.update_layout(legend=dict(x=0, y=1, traceorder="normal"))  # place legend inside
+    medD.update_layout(legend=dict(x=0.1, y= -0.6, traceorder="normal"))  # place legend below
 
     medIFR = px.line(medianRangeIFR_df,
                     title="Median of IFR (Infected / Dead) vs. time,<br>over " + str(num_reps) + " Monte Carlo runs",
@@ -728,7 +734,9 @@ def update_figures_medians(n_clicks, medianRangeC_df_jason, medianRangeD_df_jaso
                         "index": "time [days]", "value": "Median of IFR [%]"
                     },
                     )
-    medIFR.update_layout(legend=dict(x=0, y=1, traceorder="normal"))  # place legend inside
+
+    # medIFR.update_layout(legend=dict(x=0, y=1, traceorder="normal"))  # place legend inside
+    medIFR.update_layout(legend=dict(x=0.1, y= -0.6, traceorder="normal"))  # place legend below
     return [medIFR, medC, medD]
 
 
