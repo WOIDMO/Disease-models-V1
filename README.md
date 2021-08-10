@@ -1,3 +1,5 @@
+# Dash SEIR Model
+
 The SEIR model and code is based on Henri Froese's trilogy "Infectious Disease Modelling: Understanding the models that are used to model Coronavirus"
 See here: https://towardsdatascience.com/infectious-disease-modelling-part-i-understanding-sir-28d60e29fdfc
 
