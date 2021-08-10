@@ -10,5 +10,7 @@ I have changed the code to have all parameters randomly distributed (Monte Carlo
 
 The peak value of the Critical compartment is reported using a Monte Carlo approach, with uniform distribution of the parameters as set at the beginning.
 
+The result of this project can be viewed here: https://www.woidmo.org/home/programs/early-warning-network/seir-monte-carlo-model/
+
 Relying on the guidance and extensive help of Steve Puts from World Infectious Disease Monitoring Organization (WoIDMo).
 Ornit Hadar, June 23rd 2020
